@@ -335,8 +335,8 @@
                     <div class="breakdown-value" id="newsScore">--/30</div>
                 </div>
                 <div class="breakdown-item">
-                    <div>✈️ Mil Flights</div>
-                    <div class="breakdown-value" id="flightScore">--/30</div>
+                    <div>✈️ Flights</div>
+                    <div class="breakdown-value" id="flightScore">--</div>
                 </div>
                 <div class="breakdown-item">
                     <div>💬 Reddit</div>
@@ -419,7 +419,159 @@
             reddit: 0,
             total: 0
         };
+        
+        // Smart algorithm state
+        let historicalData = {
+            stocks: [],
+            news: [],
+            flights: [],
+            flightCounts: [],  // Track raw flight counts for baseline
+            timestamps: []
+        };
+        
         let isUpdating = false;
+        
+        // Smart Algorithm Functions
+        
+        // Get baseline for normal flight activity
+        function getFlightBaseline() {
+            if (historicalData.flightCounts.length < 5) return 10; // Default baseline (conservative)
+            
+            const sum = historicalData.flightCounts.reduce((a, b) => a + b, 0);
+            return sum / historicalData.flightCounts.length;
+        }
+        
+        // Check if flight is over continental US (routine = less interesting)
+        function isOverContinentalUS(lat, lon) {
+            // Continental US approximate bounds
+            return lat >= 25 && lat <= 49 && lon >= -125 && lon <= -66;
+        }
+        
+        // Classify callsign importance
+        function getCallsignImportance(callsign) {
+            const call = callsign.toUpperCase();
+            
+            // CRITICAL missions (evacuation, VIP, strategic)
+            if (call.startsWith('EVAC')) return 5;     // Evacuation = very significant
+            if (call.startsWith('SAM')) return 4;      // Special Air Mission (President, VIPs)
+            if (call.startsWith('GTMO')) return 4;     // Guantanamo operations
+            
+            // HIGH priority (strategic airlift, refueling)
+            if (call.startsWith('RCH')) return 3;      // Reach (strategic airlift)
+            if (call.startsWith('SPAR')) return 3;     // Special Air Resources
+            
+            // MEDIUM priority (tactical operations)
+            if (call.startsWith('VMGR')) return 2;     // Marine refueling
+            if (call.startsWith('CNV')) return 2;      // Convoy
+            
+            // NORMAL operations
+            if (call.startsWith('USAF')) return 1;
+            if (call.startsWith('USN')) return 1;
+            if (call.startsWith('USMC')) return 1;
+            if (call.startsWith('ARMY')) return 1;
+            if (call.startsWith('NAVY')) return 1;
+            
+            return 1; // Default
+        }
+        
+        // Detect flight clustering (multiple flights in short time from same area)
+        function detectFlightClustering(flights) {
+            if (flights.length < 3) return 1.0;
+            
+            // Check if multiple high-importance flights
+            const criticalFlights = flights.filter(f => {
+                const importance = getCallsignImportance(f.callsign);
+                return importance >= 3;
+            });
+            
+            if (criticalFlights.length >= 2) {
+                return 1.5; // Multiple critical missions = 50% bonus
+            }
+            
+            return 1.0;
+        }
+        
+        // Calculate time weight (recent = higher weight)
+        function getTimeWeight(timestamp) {
+            const now = Date.now();
+            const ageMinutes = (now - timestamp) / (1000 * 60);
+            
+            if (ageMinutes < 60) return 2.0;      // Last hour: 2x weight
+            if (ageMinutes < 360) return 1.5;     // Last 6 hours: 1.5x weight
+            if (ageMinutes < 1440) return 1.0;    // Last 24 hours: 1x weight
+            return 0.5;                            // Older: 0.5x weight
+        }
+        
+        // Detect if signals are clustered in time
+        function detectClustering(items, timeWindowMinutes = 60) {
+            if (items.length < 2) return 1.0;
+            
+            const now = Date.now();
+            const recentItems = items.filter(item => {
+                const age = (now - item.timestamp) / (1000 * 60);
+                return age < timeWindowMinutes;
+            });
+            
+            // If 50%+ of items are in the time window, it's clustered
+            const clusterRatio = recentItems.length / items.length;
+            if (clusterRatio > 0.5) {
+                return 1.3; // 30% bonus for clustering
+            }
+            return 1.0;
+        }
+        
+        // Calculate baseline from historical data
+        function getBaseline(historicalArray) {
+            if (historicalArray.length < 3) return 0;
+            
+            const sum = historicalArray.reduce((a, b) => a + b, 0);
+            return sum / historicalArray.length;
+        }
+        
+        // Detect cross-source correlation
+        function detectCorrelation(stockScore, newsScore, flightScore) {
+            let multiplier = 1.0;
+            let sources = 0;
+            
+            // Count how many sources are elevated (>50% of max)
+            if (stockScore > 15) sources++; // >50% of 30
+            if (newsScore > 15) sources++;  // >50% of 30
+            if (flightScore > 15) sources++; // >50% of 30
+            
+            // Multiple independent sources = higher confidence
+            if (sources >= 3) {
+                multiplier = 2.0; // All sources elevated = 2x
+            } else if (sources === 2) {
+                multiplier = 1.5; // Two sources = 1.5x
+            }
+            
+            // Specific high-value correlations
+            if (stockScore > 15 && newsScore > 15) {
+                multiplier = Math.max(multiplier, 1.6); // Stocks + News together
+            }
+            
+            if (stockScore > 15 && flightScore > 15) {
+                multiplier = Math.max(multiplier, 1.4); // Stocks + Flights together
+            }
+            
+            return multiplier;
+        }
+        
+        // Store historical data point
+        function recordHistoricalData(type, value) {
+            const timestamp = Date.now();
+            
+            if (!historicalData[type]) historicalData[type] = [];
+            
+            historicalData[type].push(value);
+            historicalData.timestamps.push(timestamp);
+            
+            // Keep only last 50 data points
+            if (historicalData[type].length > 50) {
+                historicalData[type].shift();
+                historicalData.timestamps.shift();
+            }
+        }
 
         // Initialize stocks grid
         function initStocksGrid() {
@@ -480,16 +632,33 @@
                     }
                 });
 
-                // Calculate stock score (30 points max)
-                // Only count UPWARD spikes (positive movement >3.5%)
-                const upwardSpiking = validResults.filter(s => s.changePercent > 3.5).length;
+                // SMART STOCK SCORING (30 points max)
+                const upwardSpiking = validResults.filter(s => s.changePercent > 3.5);
                 const avgPositiveChange = validResults
                     .filter(s => s.changePercent > 0)
                     .reduce((sum, s) => sum + s.changePercent, 0) / validResults.length;
                 
-                const volatilityScore = (upwardSpiking / CONFIG.STOCKS.length) * 18;
-                const momentumScore = Math.min(12, avgPositiveChange * 2);
+                // Base scores
+                let volatilityScore = (upwardSpiking.length / CONFIG.STOCKS.length) * 18;
+                let momentumScore = Math.min(12, avgPositiveChange * 2);
+                
+                // SMART: Detect coordinated movement (3+ stocks moving together = unusual)
+                if (upwardSpiking.length >= 3) {
+                    volatilityScore *= 1.3; // 30% bonus for coordination
+                }
+                
+                // SMART: Higher spike = more important
+                const maxSpike = Math.max(...validResults.map(s => s.changePercent));
+                if (maxSpike > 5) {
+                    momentumScore *= 1.2; // 20% bonus for strong individual spike
+                }
+                
                 scores.stock = Math.round(volatilityScore + momentumScore);
+                
+                // Record for historical baseline
+                recordHistoricalData('stocks', scores.stock);
+
+                console.log(`Stock score: ${scores.stock} (${upwardSpiking.length} spiking up, max: ${maxSpike.toFixed(2)}%, coordinated: ${upwardSpiking.length >= 3})`);
 
                 console.log(`Stock score: ${scores.stock} (${upwardSpiking} spiking up, avg +${avgPositiveChange.toFixed(2)}%)`);
 
@@ -560,7 +729,28 @@
                         list.innerHTML = '<div style="padding: 20px; opacity: 0.7;">No recent US military news found</div>';
                         scores.news = 0;
                     } else {
-                        scores.news = Math.min(30, hotCount * 3.5 + Math.min(12, displayedCount * 1.2));
+                        // SMART NEWS SCORING (30 points max)
+                        let baseScore = hotCount * 3.5 + Math.min(12, displayedCount * 1.2);
+                        
+                        // SMART: Detect clustering (multiple articles in short time)
+                        const articlesWithTime = data.articles.slice(0, displayedCount).map(a => ({
+                            timestamp: new Date(a.publishedAt).getTime()
+                        }));
+                        const clusterBonus = detectClustering(articlesWithTime, 120); // 2 hour window
+                        
+                        // SMART: Recency weight (recent news = more important)
+                        const avgAge = articlesWithTime.reduce((sum, a) => {
+                            return sum + (Date.now() - a.timestamp);
+                        }, 0) / articlesWithTime.length;
+                        const avgAgeHours = avgAge / (1000 * 60 * 60);
+                        const recencyBonus = avgAgeHours < 6 ? 1.2 : 1.0;
+                        
+                        scores.news = Math.min(30, Math.round(baseScore * clusterBonus * recencyBonus));
+                        
+                        // Record for historical baseline
+                        recordHistoricalData('news', scores.news);
+                        
+                        console.log(`News score: ${scores.news} (${displayedCount} articles, ${hotCount} hot, cluster: ${clusterBonus.toFixed(2)}x, recency: ${recencyBonus.toFixed(2)}x)`);
                     }
                     
                     console.log('News score:', scores.news, `(${displayedCount} articles, ${hotCount} hot)`);
@@ -597,67 +787,168 @@
                         
                         // US Military callsign prefixes (strict list)
                         const usMilitaryPrefixes = [
-                            'USAF',     // US Air Force
-                            'USN',      // US Navy  
-                            'USMC',     // US Marine Corps
-                            'ARMY',     // US Army
-                            'COAST',    // US Coast Guard
-                            'RCH',      // Reach (USAF Air Mobility Command)
-                            'VMGR',     // Marine aerial refueling
-                            'CNV',      // Navy convoy
-                            'SPAR',     // Special Air Resources (USAF)
-                            'EVAC',     // Evacuation flights
-                            'SAM',      // Special Air Mission (presidential, VIP)
-                            'GTMO',     // Guantanamo Bay flights
-                            'NAVY'      // Navy prefix
+                            'USAF',    // US Air Force
+                            'USN',     // US Navy  
+                            'USMC',    // US Marine Corps
+                            'ARMY',    // US Army
+                            'COAST',   // US Coast Guard
+                            'RCH',     // Reach (USAF airlift)
+                            'CNV',     // Convoy (USAF)
+                            'EVAC',    // Evacuation flights
+                            'SPAR',    // Special Air Resources (USAF)
+                            'HOIST',   // USAF
+                            'TREK',    // USAF
+                            'NAVY',    // Navy alternative
+                            'MARINE',  // Marines alternative
+                            'TORCH',   // USAF tankers
+                            'GUCCI',   // USAF C-17s
+                            'SAM',     // Special Air Mission
+                            'VMGR',    // Marine refueling
+                            'GTMO'     // Guantanamo
                         ];
                         
-                        const hasMilitaryCallsign = usMilitaryPrefixes.some(prefix => 
+                        const hasUSMilitaryCallsign = usMilitaryPrefixes.some(prefix => 
                             callsign.startsWith(prefix)
                         );
                         
-                        // US Military ICAO address ranges (more specific)
-                        // AE0000-AFFFFF is US military allocation
-                        const isUSMilitaryICAO = icao24.startsWith('ae') && icao24.length === 6;
+                        // US Military ICAO24 codes start with 'ae' (hex for US military)
+                        const hasUSMilitaryICAO = icao24.startsWith('ae');
                         
-                        // STRICT: Must have US military callsign AND be at least 4 chars
-                        // This ensures we only get aircraft actually using military callsigns
-                        return hasMilitaryCallsign && callsign.length >= 4;
+                        // Must have military callsign OR (military ICAO AND non-empty callsign)
+                        return hasUSMilitaryCallsign || (hasUSMilitaryICAO && callsign.length > 2);
                     });
 
-                    console.log(`Filtered to ${militaryFlights.length} US military flights from ${data.states.length} total flights`);
+                    // SMART FILTERING: Separate significant from routine flights
+                    const significantFlights = [];
+                    const routineFlights = [];
+                    
+                    militaryFlights.forEach(state => {
+                        const callsign = (state[1] || '').trim();
+                        const lat = state[6];
+                        const lon = state[5];
+                        const importance = getCallsignImportance(callsign);
+                        
+                        const flightInfo = {
+                            callsign: callsign,
+                            lat: lat,
+                            lon: lon,
+                            altitude: state[7],
+                            velocity: state[9],
+                            icao24: state[0],
+                            importance: importance
+                        };
+                        
+                        // SIGNIFICANT if:
+                        // 1. High-importance callsign (EVAC, SAM, etc.)
+                        // 2. NOT over continental US (international operations)
+                        // 3. High altitude + high speed (strategic movement)
+                        
+                        const isHighImportance = importance >= 3;
+                        const isInternational = lat && lon && !isOverContinentalUS(lat, lon);
+                        const isStrategic = state[7] > 10000 && state[9] > 200; // High altitude + fast
+                        
+                        if (isHighImportance || isInternational || isStrategic) {
+                            significantFlights.push(flightInfo);
+                        } else {
+                            routineFlights.push(flightInfo);
+                        }
+                    });
+
+                    console.log(`Flights: ${militaryFlights.length} total, ${significantFlights.length} significant, ${routineFlights.length} routine`);
 
                     const flightContent = document.getElementById('flightContent');
                     flightContent.innerHTML = '<div class="news-list"></div>';
                     const list = flightContent.querySelector('.news-list');
 
-                    let displayedCount = 0;
-                    militaryFlights.slice(0, 10).forEach(state => {
-                        const callsign = (state[1] || 'Unknown').trim();
-                        const altitude = state[7] ? `${Math.round(state[7])} m` : 'Unknown';
-                        const velocity = state[9] ? `${Math.round(state[9] * 3.6)} km/h` : 'Unknown';
-                        const country = state[2] || 'Unknown';
+                    // Display significant flights only
+                    significantFlights.slice(0, 10).forEach(flight => {
+                        const altitude = flight.altitude ? `${Math.round(flight.altitude)} m` : 'Unknown';
+                        const velocity = flight.velocity ? `${Math.round(flight.velocity * 3.6)} km/h` : 'Unknown';
                         
-                        displayedCount++;
-
+                        const importanceLabel = flight.importance >= 4 ? '🔴 CRITICAL' : 
+                                               flight.importance >= 3 ? '🟠 HIGH' : 
+                                               flight.importance >= 2 ? '🟡 MEDIUM' : '';
+                        
                         const item = document.createElement('div');
-                        item.className = 'news-item hot';
+                        item.className = `news-item ${flight.importance >= 3 ? 'hot' : ''}`;
                         item.innerHTML = `
-                            <div class="item-title">✈️ ${callsign}</div>
-                            <div class="item-meta">Alt: ${altitude} • Speed: ${velocity} • ${country}</div>
+                            <div class="item-title">✈️ ${flight.callsign} ${importanceLabel}</div>
+                            <div class="item-meta">Alt: ${altitude} • Speed: ${velocity} • ICAO: ${flight.icao24}</div>
                         `;
                         list.appendChild(item);
                     });
 
-                    if (displayedCount === 0) {
-                        list.innerHTML = '<div style="padding: 20px; opacity: 0.7;">No military flights detected</div>';
-                        scores.flights = 0;
-                    } else {
-                        // Score based on number of detected military flights (30 max)
-                        scores.flights = Math.min(30, Math.floor(displayedCount * 1.5));
-                    }
+                    // FLIGHT SCORING - Each aircraft worth up to 3.5 points
+                    // No cap on total - scales with actual aircraft count
+                    
+                    const rawFlightCount = militaryFlights.length;
+                    const significantCount = significantFlights.length;
+                    
+                    // Count by mission type
+                    const evacuationFlights = significantFlights.filter(f => f.callsign.toUpperCase().startsWith('EVAC'));
+                    const samFlights = significantFlights.filter(f => f.callsign.toUpperCase().startsWith('SAM'));
+                    const gtmoFlights = significantFlights.filter(f => f.callsign.toUpperCase().startsWith('GTMO'));
+                    const strategicFlights = significantFlights.filter(f => {
+                        const call = f.callsign.toUpperCase();
+                        return call.startsWith('RCH') || call.startsWith('SPAR');
+                    });
+                    
+                    console.log(`Flight breakdown: EVAC=${evacuationFlights.length}, SAM=${samFlights.length}, GTMO=${gtmoFlights.length}, Strategic=${strategicFlights.length}`);
 
-                    console.log('Flight score:', scores.flights, `(${displayedCount} military flights detected)`);
+                    let flightScore = 0;
+                    let scoreBreakdown = [];
+                    
+                    // EVAC flights - 3.5 points each (evacuations = critical)
+                    if (evacuationFlights.length > 0) {
+                        const evacScore = evacuationFlights.length * 3.5;
+                        flightScore += evacScore;
+                        scoreBreakdown.push(`${evacuationFlights.length} EVAC (${evacScore.toFixed(1)} pts)`);
+                    }
+                    
+                    // SAM flights - 3.0 points each (VIP/Presidential movement)
+                    if (samFlights.length > 0) {
+                        const samScore = samFlights.length * 3.0;
+                        flightScore += samScore;
+                        scoreBreakdown.push(`${samFlights.length} SAM (${samScore.toFixed(1)} pts)`);
+                    }
+                    
+                    // GTMO flights - 2.5 points each (detainee operations)
+                    if (gtmoFlights.length > 0) {
+                        const gtmoScore = gtmoFlights.length * 2.5;
+                        flightScore += gtmoScore;
+                        scoreBreakdown.push(`${gtmoFlights.length} GTMO (${gtmoScore.toFixed(1)} pts)`);
+                    }
+                    
+                    // Strategic airlift - 1.5 points each (deployment/logistics)
+                    if (strategicFlights.length > 0) {
+                        const strategicScore = strategicFlights.length * 1.5;
+                        flightScore += strategicScore;
+                        scoreBreakdown.push(`${strategicFlights.length} Strategic (${strategicScore.toFixed(1)} pts)`);
+                    }
+                    
+                    scores.flights = Math.round(flightScore * 10) / 10; // Round to 1 decimal
+
+                    if (scores.flights === 0) {
+                        // NO SCORE - Normal activity
+                        list.innerHTML = '<div style="padding: 20px; opacity: 0.7;">✅ Normal military flight activity</div>';
+                        console.log('Flight score: 0 (No critical missions detected)');
+                    } else {
+                        // SCORE - Critical missions detected
+                        console.log(`⚠️ Flight score: ${scores.flights} - BREAKDOWN: ${scoreBreakdown.join(', ')}`);
+                        
+                        // Add alert message to display
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'news-item hot';
+                        alertDiv.style.marginBottom = '15px';
+                        alertDiv.innerHTML = `
+                            <div class="item-title">⚠️ CRITICAL MISSION ACTIVITY DETECTED</div>
+                            <div class="item-meta">${scoreBreakdown.join(' • ')}</div>
+                        `;
+                        list.insertBefore(alertDiv, list.firstChild);
+                        
+                        // Record for historical baseline
+                        recordHistoricalData('flights', scores.flights);
+                    }
                 } else {
                     document.getElementById('flightContent').innerHTML = '<div style="padding: 20px; opacity: 0.7;">No flight data available</div>';
                     scores.flights = 0;
@@ -759,41 +1050,88 @@
 
         // Update scores display
         function updateScoresDisplay() {
-            scores.total = scores.stock + scores.news + scores.flights + scores.reddit;
+            // SMART TOTAL SCORE CALCULATION
+            
+            // 1. Get individual scores
+            const rawTotal = scores.stock + scores.news + scores.flights + scores.reddit;
+            
+            // 2. Detect cross-source correlation
+            const correlationMultiplier = detectCorrelation(scores.stock, scores.news, scores.flights);
+            
+            // 3. Apply correlation bonus
+            const correlatedScore = rawTotal * correlationMultiplier;
+            
+            // 4. Calculate baseline deviation (if we have history)
+            let baselineMultiplier = 1.0;
+            if (historicalData.stocks.length > 5) {
+                const historicalAvg = (
+                    getBaseline(historicalData.stocks) +
+                    getBaseline(historicalData.news) +
+                    getBaseline(historicalData.flights)
+                ) / 3;
+                
+                const currentAvg = (scores.stock + scores.news + scores.flights) / 3;
+                
+                if (historicalAvg > 0) {
+                    const deviation = currentAvg / historicalAvg;
+                    // If current is 2x+ above baseline, it's significant
+                    if (deviation > 2) {
+                        baselineMultiplier = 1.2; // 20% bonus for unusual activity
+                    }
+                }
+            }
+            
+            // 5. Final score
+            scores.total = Math.min(100, Math.round(correlatedScore * baselineMultiplier));
 
-            document.getElementById('totalScore').textContent = scores.total;
-            document.getElementById('stockScore').textContent = `${scores.stock}/30`;
-            document.getElementById('newsScore').textContent = `${scores.news}/30`;
-            document.getElementById('flightScore').textContent = `${scores.flights}/30`;
-            document.getElementById('redditScore').textContent = `${scores.reddit}/10`;
+            // Update UI
+            document.getElementById('totalScore').textContent = scores.total.toFixed(1);
+            document.getElementById('stockScore').textContent = scores.stock.toFixed(1);
+            document.getElementById('newsScore').textContent = scores.news.toFixed(1);
+            document.getElementById('flightScore').textContent = scores.flights.toFixed(1);
+            document.getElementById('redditScore').textContent = scores.reddit.toFixed(1);
 
-            document.getElementById('stockDisplayScore').textContent = scores.stock;
-            document.getElementById('newsDisplayScore').textContent = scores.news;
-            document.getElementById('flightDisplayScore').textContent = scores.flights;
-            document.getElementById('redditDisplayScore').textContent = scores.reddit;
+            document.getElementById('stockDisplayScore').textContent = scores.stock.toFixed(1);
+            document.getElementById('newsDisplayScore').textContent = scores.news.toFixed(1);
+            document.getElementById('flightDisplayScore').textContent = scores.flights.toFixed(1);
+            document.getElementById('redditDisplayScore').textContent = scores.reddit.toFixed(1);
+            
+            // Log smart algorithm details
+            console.log('=== SMART ALGORITHM ===');
+            console.log(`Raw total: ${rawTotal}`);
+            console.log(`Correlation multiplier: ${correlationMultiplier.toFixed(2)}x`);
+            console.log(`Baseline multiplier: ${baselineMultiplier.toFixed(2)}x`);
+            console.log(`Final score: ${scores.total}/100`);
 
             // Color code the main score card based on thresholds
             const scoreCard = document.getElementById('mainScoreCard');
             if (scores.total <= 35) {
-                // Green - Low threat
                 scoreCard.style.background = 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)';
             } else if (scores.total <= 55) {
-                // Yellow - Moderate
                 scoreCard.style.background = 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)';
             } else if (scores.total <= 79) {
-                // Orange - Elevated
                 scoreCard.style.background = 'linear-gradient(135deg, #e67e22 0%, #d35400 100%)';
             } else {
-                // Red - High alert
                 scoreCard.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
             }
 
-            // Alert banner
+            // Alert banner with smart context
             const alertBanner = document.getElementById('alertBanner');
             const alertText = document.getElementById('alertText');
 
             if (scores.total >= 65) {
-                alertText.textContent = `Multiple defense signals detected (Score: ${scores.total}/100) - Stocks: ${scores.stock}, News: ${scores.news}, Flights: ${scores.flights}, Reddit: ${scores.reddit}`;
+                let alertMessage = `High activity detected (Score: ${scores.total}/100)`;
+                
+                if (correlationMultiplier > 1.3) {
+                    alertMessage += ` - Multiple sources correlated`;
+                }
+                if (baselineMultiplier > 1.1) {
+                    alertMessage += ` - Above historical baseline`;
+                }
+                
+                alertMessage += ` | Stocks: ${scores.stock}, News: ${scores.news}, Flights: ${scores.flights}, Reddit: ${scores.reddit}`;
+                
+                alertText.textContent = alertMessage;
                 alertBanner.classList.add('active');
             } else {
                 alertBanner.classList.remove('active');
