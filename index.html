@@ -1444,8 +1444,8 @@
                 updateScoresDisplay();
                 
                 const now = new Date();
-                document.getElementById('timestamp').textContent = 
-                    `Last updated: ${now.toLocaleTimeString()}`;
+                document.getElementById('timestamp').innerHTML = 
+                    `Last updated: ${now.toLocaleTimeString()}<br><br>Website built by <a style="color:white" href="https://drew.cx" target="_blank">Drew Wilson</a>.<br><br>API Design by <a href="https://judes.club" style="color:white" target="_blank">Alec Wilson</a>.`;
                 
             } catch (error) {
                 console.error('Update error:', error);
