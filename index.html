@@ -315,7 +315,10 @@
                 <span class="live-indicator"></span>
                 <span id="marketStatus">Multi-source intelligence monitoring</span>
             </div>
-            <div class="api-sources">Stocks • News • Military Flights • Reddit</div>
+            <div style="max-width: 800px; margin: 15px auto 0; font-size: 0.95em; opacity: 0.85; line-height: 1.5;">
+                Multi-source intelligence platform analyzing market signals, news patterns, flight operations, and public discourse to generate probability scores for imminent US military engagement.
+            </div>
+            <div class="api-sources">Stocks • News • Military Flights • Navy Ships • Reddit</div>
         </header>
 
         <div class="alert-banner" id="alertBanner">
@@ -337,6 +340,10 @@
                 <div class="breakdown-item">
                     <div>✈️ Flights</div>
                     <div class="breakdown-value" id="flightScore">--</div>
+                </div>
+                <div class="breakdown-item">
+                    <div>⚓ Navy</div>
+                    <div class="breakdown-value" id="navyScore">--</div>
                 </div>
                 <div class="breakdown-item">
                     <div>💬 Reddit</div>
@@ -373,6 +380,15 @@
                 <div id="flightContent" class="loading">Loading flights...</div>
             </div>
 
+            <!-- Navy Ships Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">⚓ Navy Deployments</div>
+                    <div class="section-score" id="navyDisplayScore">0</div>
+                </div>
+                <div id="navyContent" class="loading">Loading Navy data...</div>
+            </div>
+
             <!-- Reddit Section -->
             <div class="section">
                 <div class="section-header">
@@ -395,8 +411,8 @@
     <script>
         // Configuration
         const CONFIG = {
-            FINNHUB_API_KEY: 'd5tu64pr01qtjet1c01gd5tu64pr01qtjet1c020',
-            NEWS_API_KEY: 'afaf0998b1154565aad003615322dd64',
+            // Cloudflare Worker Proxy - handles all API calls with auth & caching
+            WORKER_URL: 'https://trumpstrikes.drewwilson2022.workers.dev',
             UPDATE_INTERVAL: 390000, // 6.5 minutes
             STOCKS: [
                 { ticker: 'LMT', name: 'Lockheed Martin' },
@@ -416,6 +432,7 @@
             stock: 0,
             news: 0,
             flights: 0,
+            navy: 0,
             reddit: 0,
             total: 0
         };
@@ -595,7 +612,7 @@
         async function fetchStocks() {
             try {
                 const promises = CONFIG.STOCKS.map(async stock => {
-                    const url = `https://finnhub.io/api/v1/quote?symbol=${stock.ticker}&token=${CONFIG.FINNHUB_API_KEY}`;
+                    const url = `${CONFIG.WORKER_URL}/finnhub/quote?symbol=${stock.ticker}`;
                     const response = await fetch(url);
                     const data = await response.json();
                     
@@ -677,12 +694,11 @@
                 // More specific keywords for US military/defense
                 const keywords = '("US military" OR "US Air Force" OR "US Navy" OR "US Army" OR Pentagon OR DoD OR "Department of Defense" OR USAF) AND (deployed OR strike OR aircraft OR base OR mission OR contract OR budget)';
                 const fromDate = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString().split('T')[0]; // Last 48 hours
-                const newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(keywords)}&language=en&sortBy=publishedAt&from=${fromDate}&pageSize=20&apiKey=${CONFIG.NEWS_API_KEY}`;
                 
-                // Use CORS proxy
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(newsApiUrl)}`;
+                // Use Cloudflare Worker proxy (no API key needed in URL)
+                const newsApiUrl = `${CONFIG.WORKER_URL}/news/everything?q=${encodeURIComponent(keywords)}&language=en&sortBy=publishedAt&from=${fromDate}&pageSize=20`;
                 
-                const response = await fetch(proxyUrl);
+                const response = await fetch(newsApiUrl);
                 const data = await response.json();
                 console.log('News response:', data);
 
@@ -754,6 +770,9 @@
                     }
                     
                     console.log('News score:', scores.news, `(${displayedCount} articles, ${hotCount} hot)`);
+                    
+                    // Parse Navy deployments from same articles
+                    parseNavyDeployments(data.articles);
                 } else {
                     document.getElementById('newsContent').innerHTML = '<div style="padding: 20px; opacity: 0.7;">No recent news found</div>';
                     scores.news = 0;
@@ -770,9 +789,8 @@
             try {
                 console.log('Fetching military flights...');
                 
-                // OpenSky Network API - free, no key needed
-                // Get all flights, then filter for military
-                const url = 'https://opensky-network.org/api/states/all';
+                // Use Cloudflare Worker proxy (handles auth + caching)
+                const url = `${CONFIG.WORKER_URL}/opensky/states/all`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -956,8 +974,272 @@
                 
             } catch (error) {
                 console.error('Flight tracking error:', error);
-                document.getElementById('flightContent').innerHTML = `<div style="padding: 20px; opacity: 0.7;">Flight data temporarily unavailable</div>`;
+                document.getElementById('flightContent').innerHTML = `
+                    <div style="padding: 20px; opacity: 0.7; text-align: center;">
+                        <div style="margin-bottom: 10px;">✈️ Flight tracking unavailable</div>
+                        <div style="font-size: 0.85em;">OpenSky Network API requires CORS proxy or backend server.</div>
+                        <div style="font-size: 0.85em; margin-top: 5px;">Deploy to a server with network access to enable live flight tracking.</div>
+                    </div>
+                `;
                 scores.flights = 0;
+            }
+        }
+
+        // Fetch US Navy Ship Deployments from News
+        // Only counts MOVEMENTS and DEPLOYMENTS, not stationary presence
+        async function fetchNavyDeployments() {
+            try {
+                console.log('Fetching Navy deployments from news...');
+                
+                const navyContent = document.getElementById('navyContent');
+                navyContent.innerHTML = '<div class="news-list"></div>';
+                const list = navyContent.querySelector('.news-list');
+
+                // Search for Navy deployment news
+                const navyKeywords = 'US Navy carrier deployed OR "strike group deployed" OR "USS deployed" OR "carrier heading" OR "ships ordered"';
+                const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Last 7 days
+                const newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(navyKeywords)}&language=en&sortBy=publishedAt&from=${fromDate}&pageSize=20&apiKey=${CONFIG.NEWS_API_KEY}`;
+                
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(newsApiUrl)}`;
+                
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                console.log('Navy news response:', data);
+
+                if (data.articles && data.articles.length > 0) {
+                    // Keywords that indicate MOVEMENT/DEPLOYMENT (not just presence)
+                    const movementKeywords = ['deployed', 'deploying', 'heading to', 'ordered to', 'en route', 'sailing to', 'arriving in', 'transiting', 'departed', 'underway'];
+                    
+                    // Ship type keywords
+                    const carrierKeywords = ['carrier strike group', 'csg', 'cvn', 'uss abraham lincoln', 'uss carl vinson', 'uss theodore roosevelt', 'uss gerald ford', 'uss george washington', 'uss dwight eisenhower', 'uss harry truman', 'uss ronald reagan', 'uss nimitz', 'uss john stennis'];
+                    const amphibiousKeywords = ['amphibious ready group', 'arg', 'meu', 'marine expeditionary unit', 'amphibious assault'];
+                    const destroyerKeywords = ['destroyer', 'guided missile destroyer', 'ddg', 'cruiser'];
+                    
+                    // Hotspot regions
+                    const hotspots = ['middle east', 'persian gulf', 'iran', 'red sea', 'mediterranean', 'south china sea', 'taiwan strait', 'strait of hormuz', 'gulf of oman', 'arabian sea', 'indo-pacific'];
+                    
+                    let navyScore = 0;
+                    let scoreBreakdown = [];
+                    let displayedCount = 0;
+
+                    data.articles.forEach(article => {
+                        if (displayedCount >= 8) return;
+                        
+                        const title = (article.title || '').toLowerCase();
+                        const desc = (article.description || '').toLowerCase();
+                        const combined = title + ' ' + desc;
+                        
+                        // Must have MOVEMENT keyword (filtering out "stationed", "currently in", etc.)
+                        const hasMovement = movementKeywords.some(kw => combined.includes(kw));
+                        if (!hasMovement) return; // Skip if not moving
+                        
+                        // Check what type of ship and where
+                        const hasCarrier = carrierKeywords.some(kw => combined.includes(kw));
+                        const hasAmphibious = amphibiousKeywords.some(kw => combined.includes(kw));
+                        const hasDestroyers = destroyerKeywords.some(kw => combined.includes(kw));
+                        const hasHotspot = hotspots.some(kw => combined.includes(kw));
+                        
+                        let itemScore = 0;
+                        let itemType = '';
+                        
+                        // Carrier moving to hotspot = highest priority
+                        if (hasCarrier && hasHotspot) {
+                            itemScore = 5.0;
+                            itemType = '🔴 CARRIER DEPLOYMENT';
+                        }
+                        // Amphibious group moving to hotspot
+                        else if (hasAmphibious && hasHotspot) {
+                            itemScore = 1.5;
+                            itemType = '🟠 AMPHIBIOUS DEPLOYMENT';
+                        }
+                        // Multiple destroyers/surface ships moving
+                        else if (hasDestroyers && hasHotspot) {
+                            itemScore = 2.5;
+                            itemType = '🟡 SURFACE SHIPS DEPLOYMENT';
+                        }
+                        // Carrier moving anywhere (even non-hotspot)
+                        else if (hasCarrier) {
+                            itemScore = 2.0;
+                            itemType = '🟠 CARRIER MOVEMENT';
+                        }
+                        // Any significant ship movement
+                        else if (hasAmphibious || hasDestroyers) {
+                            itemScore = 0.5;
+                            itemType = '⚪ SHIP MOVEMENT';
+                        }
+                        
+                        if (itemScore > 0) {
+                            navyScore += itemScore;
+                            scoreBreakdown.push(`${itemType} (${itemScore.toFixed(1)} pts)`);
+                            
+                            const listItem = document.createElement('div');
+                            listItem.className = `news-item ${itemScore >= 3 ? 'hot' : ''}`;
+                            const timeAgo = getTimeAgo(new Date(article.publishedAt));
+                            listItem.innerHTML = `
+                                <div class="item-title">${itemType} ${article.title}</div>
+                                <div class="item-meta">${article.source?.name || 'Unknown'} • ${timeAgo}</div>
+                            `;
+                            list.appendChild(listItem);
+                            displayedCount++;
+                        }
+                    });
+
+                    scores.navy = Math.round(navyScore * 10) / 10;
+
+                    if (displayedCount === 0) {
+                        list.innerHTML = '<div style="padding: 20px; opacity: 0.7;">✅ No active Navy deployments detected in recent news</div>';
+                        scores.navy = 0;
+                    }
+
+                    console.log(`⚓ Navy score: ${scores.navy} (${displayedCount} active deployments from news)`);
+                    if (scoreBreakdown.length > 0) {
+                        console.log(`Navy breakdown: ${scoreBreakdown.join(', ')}`);
+                    }
+                    
+                } else {
+                    list.innerHTML = '<div style="padding: 20px; opacity: 0.7;">No Navy news found</div>';
+                    scores.navy = 0;
+                }
+                
+            } catch (error) {
+                console.error('Navy fetch error:', error);
+                document.getElementById('navyContent').innerHTML = `<div style="padding: 20px; opacity: 0.7;">Navy data temporarily unavailable</div>`;
+                scores.navy = 0;
+            }
+        }
+
+        // Parse Navy Carrier Deployments from news articles
+        // Tracks ALL 11 US carriers and scores by hotspot risk level
+        function parseNavyDeployments(articles) {
+            try {
+                console.log('Parsing Navy carrier deployments...');
+                
+                const navyContent = document.getElementById('navyContent');
+                navyContent.innerHTML = '<div class="news-list"></div>';
+                const list = navyContent.querySelector('.news-list');
+
+                if (!articles || articles.length === 0) {
+                    list.innerHTML = '<div style="padding: 20px; opacity: 0.7;">No news data for Navy tracking</div>';
+                    scores.navy = 0;
+                    return;
+                }
+
+                // US Navy Carrier Strike Groups (all 11)
+                const carriers = [
+                    {name: 'Abraham Lincoln', variants: ['abraham lincoln', 'lincoln']},
+                    {name: 'Eisenhower', variants: ['eisenhower', 'ike']},
+                    {name: 'Carl Vinson', variants: ['carl vinson', 'vinson']},
+                    {name: 'Theodore Roosevelt', variants: ['theodore roosevelt', 'tr', 't. roosevelt']},
+                    {name: 'George Washington', variants: ['george washington', 'gwash']},
+                    {name: 'Harry Truman', variants: ['harry truman', 'truman', 'hst']},
+                    {name: 'Ronald Reagan', variants: ['ronald reagan', 'reagan']},
+                    {name: 'Nimitz', variants: ['nimitz']},
+                    {name: 'John Stennis', variants: ['john stennis', 'stennis']},
+                    {name: 'George Bush', variants: ['george bush', 'ghw bush', 'george h.w. bush']},
+                    {name: 'Gerald Ford', variants: ['gerald ford', 'ford']}
+                ];
+
+                // Hotspot risk levels
+                const highRisk = ['iran', 'red sea', 'taiwan strait', 'strait of hormuz', 'houthi', 'yemen'];
+                const mediumRisk = ['middle east', 'persian gulf', 'south china sea', 'mediterranean', 'arabian sea', 'gulf of oman'];
+                
+                // Movement keywords
+                const deploymentKeywords = ['deployed', 'deploying', 'heads to', 'heading to', 'en route', 'ordered to', 'transits', 'underway', 'arrives', 'operating in', 'stationed'];
+                
+                let navyScore = 0;
+                let trackedCarriers = [];
+
+                // Check EVERY carrier against ALL articles
+                carriers.forEach(carrier => {
+                    // Find articles mentioning this carrier
+                    const carrierArticles = articles.filter(article => {
+                        const combined = `${article.title || ''} ${article.description || ''}`.toLowerCase();
+                        // Check if ANY variant of carrier name is mentioned
+                        return carrier.variants.some(variant => 
+                            combined.includes(variant) || combined.includes(`uss ${variant}`)
+                        );
+                    });
+
+                    if (carrierArticles.length > 0) {
+                        // Check ALL articles for this carrier to find highest risk deployment
+                        let bestMatch = null;
+                        let highestRisk = 0;
+
+                        carrierArticles.forEach(article => {
+                            const combined = `${article.title || ''} ${article.description || ''}`.toLowerCase();
+                            
+                            // Check for movement/deployment
+                            const hasMovement = deploymentKeywords.some(kw => combined.includes(kw));
+                            
+                            // Determine risk level
+                            let points = 0;
+                            let region = '';
+                            let riskLevel = '';
+                            
+                            if (highRisk.some(loc => combined.includes(loc))) {
+                                points = 3.0;
+                                region = highRisk.find(loc => combined.includes(loc));
+                                riskLevel = '🔴 HIGH RISK';
+                            } else if (mediumRisk.some(loc => combined.includes(loc))) {
+                                points = 1.5;
+                                region = mediumRisk.find(loc => combined.includes(loc));
+                                riskLevel = '🟠 MEDIUM RISK';
+                            } else if (hasMovement) {
+                                // Has movement but not in tracked region - skip (0 points)
+                                points = 0;
+                            }
+                            
+                            // Keep highest risk deployment for this carrier
+                            if (points > highestRisk) {
+                                highestRisk = points;
+                                bestMatch = {
+                                    name: `USS ${carrier.name}`,
+                                    region: region.toUpperCase(),
+                                    riskLevel: riskLevel,
+                                    points: points,
+                                    article: article
+                                };
+                            }
+                        });
+
+                        // Add carrier if it's in a risk zone
+                        if (bestMatch && bestMatch.points > 0) {
+                            navyScore += bestMatch.points;
+                            trackedCarriers.push(bestMatch);
+                            console.log(`Found: ${bestMatch.name} in ${bestMatch.region} (${bestMatch.points} pts)`);
+                        }
+                    }
+                });
+
+                // Display tracked carriers
+                if (trackedCarriers.length > 0) {
+                    // Sort by risk (highest first)
+                    trackedCarriers.sort((a, b) => b.points - a.points);
+                    
+                    trackedCarriers.forEach(carrier => {
+                        const item = document.createElement('div');
+                        item.className = `news-item ${carrier.points >= 2.5 ? 'hot' : ''}`;
+                        const timeAgo = getTimeAgo(new Date(carrier.article.publishedAt));
+                        item.innerHTML = `
+                            <div class="item-title">${carrier.riskLevel} ${carrier.name} - ${carrier.region}</div>
+                            <div class="item-meta">${carrier.article.source?.name || 'News'} • ${timeAgo} • ${carrier.points.toFixed(1)} pts</div>
+                        `;
+                        list.appendChild(item);
+                    });
+                    
+                    scores.navy = Math.round(navyScore * 10) / 10;
+                    console.log(`⚓ Navy: ${scores.navy} pts (${trackedCarriers.length} carriers in risk zones)`);
+                } else {
+                    list.innerHTML = '<div style="padding: 20px; opacity: 0.7;">✅ No carriers detected in high/medium risk zones</div>';
+                    scores.navy = 0;
+                    console.log('Navy: 0 pts (No carriers in risk zones)');
+                }
+                
+            } catch (error) {
+                console.error('Navy parse error:', error);
+                document.getElementById('navyContent').innerHTML = '<div style="padding: 20px; opacity: 0.7;">Navy tracking error</div>';
+                scores.navy = 0;
             }
         }
 
@@ -1053,7 +1335,7 @@
             // SMART TOTAL SCORE CALCULATION
             
             // 1. Get individual scores
-            const rawTotal = scores.stock + scores.news + scores.flights + scores.reddit;
+            const rawTotal = scores.stock + scores.news + scores.flights + scores.navy + scores.reddit;
             
             // 2. Detect cross-source correlation
             const correlationMultiplier = detectCorrelation(scores.stock, scores.news, scores.flights);
@@ -1089,11 +1371,13 @@
             document.getElementById('stockScore').textContent = scores.stock.toFixed(1);
             document.getElementById('newsScore').textContent = scores.news.toFixed(1);
             document.getElementById('flightScore').textContent = scores.flights.toFixed(1);
+            document.getElementById('navyScore').textContent = scores.navy.toFixed(1);
             document.getElementById('redditScore').textContent = scores.reddit.toFixed(1);
 
             document.getElementById('stockDisplayScore').textContent = scores.stock.toFixed(1);
             document.getElementById('newsDisplayScore').textContent = scores.news.toFixed(1);
             document.getElementById('flightDisplayScore').textContent = scores.flights.toFixed(1);
+            document.getElementById('navyDisplayScore').textContent = scores.navy.toFixed(1);
             document.getElementById('redditDisplayScore').textContent = scores.reddit.toFixed(1);
             
             // Log smart algorithm details
@@ -1129,7 +1413,7 @@
                     alertMessage += ` - Above historical baseline`;
                 }
                 
-                alertMessage += ` | Stocks: ${scores.stock}, News: ${scores.news}, Flights: ${scores.flights}, Reddit: ${scores.reddit}`;
+                alertMessage += ` | Stocks: ${scores.stock}, News: ${scores.news}, Flights: ${scores.flights}, Navy: ${scores.navy}, Reddit: ${scores.reddit}`;
                 
                 alertText.textContent = alertMessage;
                 alertBanner.classList.add('active');
@@ -1152,7 +1436,7 @@
                 // Fetch all sources in parallel
                 await Promise.all([
                     fetchStocks(),
-                    fetchNews(),
+                    fetchNews(), // This also calls parseNavyDeployments()
                     fetchMilitaryFlights(),
                     fetchReddit()
                 ]);
