@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>US Military Intelligence Dashboard</title>
+    <title>Military Intelligence Dashboard - AI Prediction System</title>
     <style>
         * {
             margin: 0;
@@ -12,11 +12,11 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: #fff;
+            font-family: 'Courier New', monospace;
+            background: #0a0e27;
+            color: #00ff41;
             padding: 20px;
-            min-height: 100vh;
+            line-height: 1.6;
         }
 
         .container {
@@ -26,245 +26,198 @@
 
         header {
             text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #00ff41;
             margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
         }
 
         h1 {
             font-size: 2.5em;
+            text-shadow: 0 0 10px #00ff41;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .subtitle {
+            color: #0f0;
             font-size: 1.1em;
-            opacity: 0.9;
+            opacity: 0.8;
         }
 
-        .last-updated {
-            margin-top: 10px;
-            font-size: 0.9em;
-            opacity: 0.7;
-        }
-
-        /* AI Score Section */
-        .ai-score-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .ai-score-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .status-bar {
+            background: #0d1117;
+            border: 1px solid #00ff41;
+            padding: 15px;
             margin-bottom: 20px;
-        }
-
-        .ai-score-title {
-            font-size: 1.8em;
-            font-weight: bold;
-        }
-
-        .ai-score-display {
             display: flex;
-            align-items: center;
+            justify-content: space-around;
+            flex-wrap: wrap;
             gap: 20px;
         }
 
-        .score-circle {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3em;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            border: 5px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .score-label {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-
-        .alert-banner {
-            background: #ff4444;
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-            font-weight: bold;
+        .status-item {
             text-align: center;
-            animation: pulse 2s infinite;
-            display: none;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .score-explanation {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.95em;
-            line-height: 1.6;
-        }
-
-        .score-explanation strong {
-            color: #ffd700;
-        }
-
-        .confidence-scores {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .section-header {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .confidence-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 8px;
-            transition: transform 0.2s;
-        }
-
-        .confidence-item:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .confidence-label {
-            font-size: 0.9em;
-            opacity: 0.8;
+        .status-label {
+            font-size: 0.8em;
+            opacity: 0.7;
             margin-bottom: 5px;
         }
 
-        .confidence-value {
-            font-size: 1.5em;
+        .status-value {
+            font-size: 1.3em;
             font-weight: bold;
         }
 
-        .reasoning-section {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .reasoning-toggle {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            width: 100%;
-            text-align: left;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .reasoning-toggle:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .reasoning-content {
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 5px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            display: none;
-        }
-
-        .reasoning-content.show {
-            display: block;
-        }
-
-        /* Dashboard Grid */
-        .dashboard-grid {
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
             gap: 20px;
             margin-bottom: 20px;
         }
 
-        .card {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
+        .panel {
+            background: #0d1117;
+            border: 1px solid #00ff41;
             padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
         }
 
-        .card-header {
-            font-size: 1.5em;
+        .panel h2 {
+            color: #00ff41;
             margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 1px solid #00ff41;
             padding-bottom: 10px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
 
-        /* Defense Stocks */
-        .stock-item {
+        .threat-meter {
+            width: 100%;
+            height: 40px;
+            background: #1a1f36;
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .threat-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff41 0%, #ffff00 50%, #ff0000 100%);
+            transition: width 0.5s ease;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .region-list {
+            list-style: none;
+        }
+
+        .region-item {
+            background: #1a1f36;
             padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #00ff41;
+        }
+
+        .region-score {
+            float: right;
+            background: #00ff41;
+            color: #000;
+            padding: 2px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .indicator-list {
+            margin-top: 15px;
+        }
+
+        .indicator {
+            background: #1a1f36;
+            padding: 8px;
+            margin: 8px 0;
+            border-left: 2px solid #00ff41;
+            font-size: 0.9em;
+        }
+
+        .probability-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .probability-card {
+            background: #1a1f36;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .probability-label {
+            font-size: 0.8em;
+            opacity: 0.7;
             margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .probability-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stock-card {
+            background: #1a1f36;
+            padding: 10px;
+            text-align: center;
             border-radius: 5px;
         }
 
         .stock-symbol {
             font-weight: bold;
             font-size: 1.1em;
+            margin-bottom: 5px;
         }
 
         .stock-price {
             font-size: 1.2em;
+            margin: 5px 0;
         }
 
         .stock-change {
             font-size: 0.9em;
-            padding: 3px 8px;
-            border-radius: 3px;
         }
 
-        .stock-change.positive {
-            background: #4caf50;
+        .positive {
+            color: #00ff41;
         }
 
-        .stock-change.negative {
-            background: #f44336;
+        .negative {
+            color: #ff4444;
         }
 
-        /* News Items */
+        .news-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
         .news-item {
+            background: #1a1f36;
             padding: 12px;
-            margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-            border-left: 3px solid #2196F3;
+            margin: 10px 0;
+            border-left: 2px solid #00ff41;
         }
 
         .news-title {
@@ -273,461 +226,541 @@
         }
 
         .news-source {
-            font-size: 0.85em;
-            opacity: 0.7;
+            font-size: 0.8em;
+            opacity: 0.6;
         }
 
-        /* Flight Tracking */
-        .flight-item {
-            padding: 10px;
-            margin-bottom: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
+        .flight-count {
+            font-size: 3em;
+            text-align: center;
+            margin: 20px 0;
+            color: #00ff41;
+            text-shadow: 0 0 20px #00ff41;
         }
 
-        .flight-callsign {
-            font-weight: bold;
-            color: #ffd700;
-        }
-
-        /* Navy Deployments */
-        .deployment-item {
-            padding: 12px;
-            margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-            border-left: 3px solid #ff9800;
-        }
-
-        .carrier-name {
-            font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 5px;
-        }
-
-        /* Reddit Activity */
-        .reddit-item {
-            padding: 10px;
-            margin-bottom: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-        }
-
-        .reddit-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .reddit-meta {
-            font-size: 0.85em;
-            opacity: 0.7;
-        }
-
-        /* Loading States */
         .loading {
             text-align: center;
             padding: 20px;
+            font-size: 1.2em;
             opacity: 0.7;
         }
 
         .error {
-            color: #ff6b6b;
-            padding: 10px;
-            background: rgba(255, 0, 0, 0.1);
+            background: #ff4444;
+            color: #fff;
+            padding: 15px;
             border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .timestamp {
+            font-size: 0.8em;
+            opacity: 0.6;
+            text-align: right;
             margin-top: 10px;
         }
 
-        /* Responsive */
+        .model-badge {
+            display: inline-block;
+            background: #00ff41;
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .executive-summary {
+            background: #1a1f36;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 3px solid #00ff41;
+            line-height: 1.8;
+        }
+
+        .scenario-box {
+            background: #1a1f36;
+            padding: 12px;
+            margin: 10px 0;
+            border-left: 3px solid #ffff00;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            margin: 0 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #00cc33;
+            box-shadow: 0 0 15px #00ff41;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 5px;
+        }
+
         @media (max-width: 768px) {
-            .dashboard-grid {
+            .grid {
                 grid-template-columns: 1fr;
             }
             
-            .ai-score-header {
-                flex-direction: column;
-                gap: 20px;
+            .probability-grid {
+                grid-template-columns: 1fr;
             }
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🛡️ US Military Intelligence Dashboard</h1>
-            <div class="subtitle">Real-time monitoring of defense sector activity</div>
-            <div class="last-updated" id="lastUpdated">Last updated: Loading...</div>
+            <h1>⚡ MILITARY INTELLIGENCE DASHBOARD ⚡</h1>
+            <div class="subtitle">AI-Powered US Military Action Prediction System</div>
+            <div class="subtitle" style="font-size: 0.9em; margin-top: 10px;">
+                <span id="currentTime"></span> EST
+            </div>
         </header>
 
-        <!-- AI Score Section -->
-        <div class="ai-score-section">
-            <div class="alert-banner" id="alertBanner">
-                ⚠️ HIGH ALERT: Elevated military activity detected!
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">SYSTEM STATUS</div>
+                <div class="status-value" id="systemStatus">INITIALIZING...</div>
             </div>
-
-            <div class="ai-score-header">
-                <div class="ai-score-title">🤖 Threat Assessment Score</div>
-                <div class="ai-score-display">
-                    <div class="score-circle" id="scoreCircle">
-                        <span id="scoreValue">--</span>
-                    </div>
-                    <div>
-                        <div class="score-label" style="font-size: 1.4em; margin-bottom: 5px;">
-                            <span id="scoreDisplay">-- / 100</span>
-                        </div>
-                        <div class="score-label" style="font-size: 0.95em; opacity: 0.8;">Military Strike Likelihood</div>
-                    </div>
-                </div>
+            <div class="status-item">
+                <div class="status-label">LAST QUICK SCAN (4o-mini)</div>
+                <div class="status-value" id="lastMini">--:--</div>
             </div>
-
-            <div class="section-header">📊 Data Source Confidence Levels</div>
-            <div class="confidence-scores" id="confidenceScores">
-                <!-- Will be populated by JavaScript -->
+            <div class="status-item">
+                <div class="status-label">LAST DEEP ANALYSIS (4o)</div>
+                <div class="status-value" id="lastDeep">--:--</div>
             </div>
-
-            <div class="reasoning-section">
-                <button class="reasoning-toggle" id="reasoningToggle">
-                    <span>📋 View Reasoning</span>
-                    <span id="toggleIcon">▼</span>
-                </button>
-                <div class="reasoning-content" id="reasoningContent">
-                    Loading AI analysis...
-                </div>
+            <div class="status-item">
+                <div class="status-label">NEXT UPDATE</div>
+                <div class="status-value blink" id="nextUpdate">CALCULATING...</div>
             </div>
         </div>
 
-        <!-- Dashboard Grid -->
-        <div class="dashboard-grid">
-            <!-- Defense Stocks -->
-            <div class="card">
-                <div class="card-header">📈 Defense Stocks</div>
-                <div id="stocksContainer">
-                    <div class="loading">Loading stock data...</div>
+        <div class="controls">
+            <button onclick="runMiniAnalysis()">🔄 RUN QUICK SCAN</button>
+            <button onclick="runDeepAnalysis()">🔍 RUN DEEP ANALYSIS</button>
+            <button onclick="refreshAll()">♻️ REFRESH ALL DATA</button>
+        </div>
+
+        <!-- Latest AI Analysis -->
+        <div class="panel">
+            <h2>🤖 LATEST AI THREAT ASSESSMENT <span class="model-badge" id="latestModel">--</span></h2>
+            <div class="threat-meter">
+                <div class="threat-fill" id="threatFill" style="width: 0%;">
+                    <span id="threatScore">--</span>
                 </div>
             </div>
+            <div id="latestAnalysis" class="loading">Waiting for analysis...</div>
+        </div>
 
-            <!-- Military News -->
-            <div class="card">
-                <div class="card-header">📰 Military News</div>
-                <div id="newsContainer">
-                    <div class="loading">Loading news...</div>
-                </div>
+        <!-- Grid Layout -->
+        <div class="grid">
+            <!-- Quick Scan Results -->
+            <div class="panel">
+                <h2>⚡ QUICK SCAN (GPT-4o-mini)</h2>
+                <div id="miniAnalysis" class="loading">No recent scan...</div>
             </div>
 
+            <!-- Deep Analysis Results -->
+            <div class="panel">
+                <h2>🔍 DEEP ANALYSIS (GPT-4o)</h2>
+                <div id="deepAnalysis" class="loading">No recent analysis...</div>
+            </div>
+        </div>
+
+        <!-- Defense Stocks -->
+        <div class="panel">
+            <h2>📈 DEFENSE CONTRACTOR STOCKS</h2>
+            <div class="stock-grid" id="stockGrid">
+                <div class="loading">Loading stocks...</div>
+            </div>
+        </div>
+
+        <div class="grid">
             <!-- Military Flights -->
-            <div class="card">
-                <div class="card-header">✈️ Military Flights</div>
-                <div id="flightsContainer">
-                    <div class="loading">Loading flight data...</div>
-                </div>
+            <div class="panel">
+                <h2>✈️ MILITARY FLIGHT ACTIVITY</h2>
+                <div class="flight-count" id="flightCount">--</div>
+                <div style="text-align: center; opacity: 0.7;">Active Military Aircraft</div>
+                <div id="flightDetails"></div>
             </div>
 
-            <!-- Navy Deployments -->
-            <div class="card">
-                <div class="card-header">⚓ Navy Carrier Deployments</div>
-                <div id="deploymentsContainer">
-                    <div class="loading">Loading deployment data...</div>
-                </div>
-            </div>
-
-            <!-- Reddit Activity -->
-            <div class="card">
-                <div class="card-header">💬 Reddit Military Activity</div>
-                <div id="redditContainer">
-                    <div class="loading">Loading Reddit data...</div>
+            <!-- Latest News -->
+            <div class="panel">
+                <h2>📰 LATEST INTELLIGENCE</h2>
+                <div class="news-list" id="newsList">
+                    <div class="loading">Loading news...</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const WORKER_URL = 'https://trumpstrikes.drewwilson2022.workers.dev';
-        const STOCKS = ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'LHX', 'PLTR'];
-        const REFRESH_INTERVAL = 6.5 * 60 * 1000; // 6.5 minutes
+        const API_BASE = 'https://trumpstrikes.drewwilson2022.workers.dev';
+        let refreshInterval;
 
-        // Color thresholds for threat score
-        function getScoreColor(score) {
-            if (score >= 91) return '#000000';  // Black
-            if (score >= 76) return '#8B0000';  // Dark Red
-            if (score >= 61) return '#FF4444';  // Red
-            if (score >= 41) return '#FFA500';  // Orange
-            if (score >= 21) return '#FFD700';  // Yellow
-            return '#4CAF50';  // Green
-        }
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            refreshAll();
+            // Auto-refresh every 2 minutes
+            refreshInterval = setInterval(refreshAll, 120000);
+        });
 
-        // Fetch AI score from worker
-        async function fetchAIScore() {
-            try {
-                const response = await fetch(`${WORKER_URL}/api/score`);
-                if (!response.ok) throw new Error('Failed to fetch AI score');
-                
-                const data = await response.json();
-                console.log('API Response:', data); // Debug log
-                
-                // Update score display
-                const scoreElement = document.getElementById('scoreValue');
-                const scoreDisplay = document.getElementById('scoreDisplay');
-                const scoreCircle = document.getElementById('scoreCircle');
-                scoreElement.textContent = data.score || 0;
-                scoreDisplay.textContent = `${data.score || 0} / 100`;
-                scoreCircle.style.background = getScoreColor(data.score || 0);
-                
-                // Show alert banner if score is high
-                const alertBanner = document.getElementById('alertBanner');
-                if (data.score > 75) {
-                    alertBanner.style.display = 'block';
-                } else {
-                    alertBanner.style.display = 'none';
-                }
-                
-                // Update confidence scores with fallback
-                console.log('Confidence data:', data.confidence); // Debug log
-                updateConfidenceScores(data.confidence || {});
-                
-                // Update reasoning
-                document.getElementById('reasoningContent').textContent = data.reasoning || 'No reasoning available';
-                
-            } catch (error) {
-                console.error('Error fetching AI score:', error);
-                document.getElementById('scoreValue').textContent = 'ERR';
-                document.getElementById('scoreCircle').style.background = '#666';
-                document.getElementById('reasoningContent').textContent = `Error: ${error.message}`;
-            }
-        }
-
-        // Update confidence scores display
-        function updateConfidenceScores(confidence) {
-            const container = document.getElementById('confidenceScores');
-            container.innerHTML = '';
-            
-            // If no confidence data, show placeholder
-            if (!confidence || typeof confidence !== 'object') {
-                console.warn('No confidence data available');
-                confidence = {
-                    overall: 0,
-                    defense_stocks: 0,
-                    military_news: 0,
-                    flight_activity: 0,
-                    navy_deployments: 0,
-                    social_media: 0
-                };
-            }
-            
-            const scores = [
-                { label: 'Overall', value: confidence.overall || 0 },
-                { label: 'Defense Stocks', value: confidence.defense_stocks || 0 },
-                { label: 'Military News', value: confidence.military_news || 0 },
-                { label: 'Flight Activity', value: confidence.flight_activity || 0 },
-                { label: 'Navy Deployments', value: confidence.navy_deployments || 0 },
-                { label: 'Social Media', value: confidence.social_media || 0 }
-            ];
-            
-            console.log('Displaying confidence scores:', scores); // Debug
-            
-            scores.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'confidence-item';
-                div.innerHTML = `
-                    <div class="confidence-label">${item.label}</div>
-                    <div class="confidence-value">${item.value}%</div>
-                `;
-                container.appendChild(div);
+        function updateClock() {
+            const now = new Date();
+            const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+            document.getElementById('currentTime').textContent = est.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
             });
         }
 
-        // Toggle reasoning display
-        document.getElementById('reasoningToggle').addEventListener('click', () => {
-            const content = document.getElementById('reasoningContent');
-            const icon = document.getElementById('toggleIcon');
-            
-            if (content.classList.contains('show')) {
-                content.classList.remove('show');
-                icon.textContent = '▼';
-            } else {
-                content.classList.add('show');
-                icon.textContent = '▲';
-            }
-        });
-
-        // Fetch defense stocks
-        async function fetchStocks() {
-            const container = document.getElementById('stocksContainer');
-            container.innerHTML = '<div class="loading">Loading stock data...</div>';
-            
-            try {
-                const promises = STOCKS.map(symbol => 
-                    fetch(`${WORKER_URL}/api/stock/${symbol}`).then(r => r.json())
-                );
-                const stocks = await Promise.all(promises);
-                
-                container.innerHTML = '';
-                stocks.forEach(stock => {
-                    if (stock.error) return;
-                    
-                    const change = stock.changePercent || 0;
-                    const div = document.createElement('div');
-                    div.className = 'stock-item';
-                    div.innerHTML = `
-                        <span class="stock-symbol">${stock.symbol}</span>
-                        <span class="stock-price">$${stock.price?.toFixed(2) || '--'}</span>
-                        <span class="stock-change ${change >= 0 ? 'positive' : 'negative'}">
-                            ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
-                        </span>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (error) {
-                container.innerHTML = `<div class="error">Error loading stocks: ${error.message}</div>`;
-            }
-        }
-
-        // Fetch military news
-        async function fetchNews() {
-            const container = document.getElementById('newsContainer');
-            container.innerHTML = '<div class="loading">Loading news...</div>';
-            
-            try {
-                const response = await fetch(`${WORKER_URL}/api/news`);
-                const data = await response.json();
-                
-                container.innerHTML = '';
-                if (data.articles && data.articles.length > 0) {
-                    data.articles.slice(0, 5).forEach(article => {
-                        const div = document.createElement('div');
-                        div.className = 'news-item';
-                        div.innerHTML = `
-                            <div class="news-title">${article.title}</div>
-                            <div class="news-source">${article.source} • ${new Date(article.publishedAt).toLocaleDateString()}</div>
-                        `;
-                        div.style.cursor = 'pointer';
-                        div.onclick = () => window.open(article.url, '_blank');
-                        container.appendChild(div);
-                    });
-                } else {
-                    container.innerHTML = '<div>No recent news available</div>';
-                }
-            } catch (error) {
-                container.innerHTML = `<div class="error">Error loading news: ${error.message}</div>`;
-            }
-        }
-
-        // Fetch military flights
-        async function fetchFlights() {
-            const container = document.getElementById('flightsContainer');
-            container.innerHTML = '<div class="loading">Loading flight data...</div>';
-            
-            try {
-                const response = await fetch(`${WORKER_URL}/api/flights`);
-                const data = await response.json();
-                
-                container.innerHTML = '';
-                if (data.flights && data.flights.length > 0) {
-                    data.flights.slice(0, 8).forEach(flight => {
-                        const div = document.createElement('div');
-                        div.className = 'flight-item';
-                        div.innerHTML = `
-                            <div class="flight-callsign">${flight.callsign || 'Unknown'}</div>
-                            <div>Alt: ${flight.altitude || '--'}m • Speed: ${flight.velocity || '--'}m/s</div>
-                            <div style="font-size: 0.85em; opacity: 0.7;">Origin: ${flight.origin || 'Unknown'}</div>
-                        `;
-                        container.appendChild(div);
-                    });
-                } else {
-                    container.innerHTML = '<div>No active military flights detected</div>';
-                }
-            } catch (error) {
-                container.innerHTML = `<div class="error">Error loading flights: ${error.message}</div>`;
-            }
-        }
-
-        // Fetch Navy deployments
-        async function fetchDeployments() {
-            const container = document.getElementById('deploymentsContainer');
-            container.innerHTML = '<div class="loading">Loading deployment data...</div>';
-            
-            try {
-                const response = await fetch(`${WORKER_URL}/api/navy`);
-                const data = await response.json();
-                
-                container.innerHTML = '';
-                if (data.deployments && data.deployments.length > 0) {
-                    data.deployments.forEach(deployment => {
-                        const div = document.createElement('div');
-                        div.className = 'deployment-item';
-                        div.innerHTML = `
-                            <div class="carrier-name">${deployment.carrier}</div>
-                            <div>Location: ${deployment.location || 'Unknown'}</div>
-                            <div>Status: ${deployment.status || 'Unknown'}</div>
-                            ${deployment.deployment_date ? `<div style="font-size: 0.85em; opacity: 0.7; margin-top: 5px;">Deployed: ${deployment.deployment_date}</div>` : ''}
-                        `;
-                        container.appendChild(div);
-                    });
-                } else {
-                    container.innerHTML = '<div>No deployment data available</div>';
-                }
-            } catch (error) {
-                container.innerHTML = `<div class="error">Error loading deployments: ${error.message}</div>`;
-            }
-        }
-
-        // Fetch Reddit activity
-        async function fetchReddit() {
-            const container = document.getElementById('redditContainer');
-            container.innerHTML = '<div class="loading">Loading Reddit data...</div>';
-            
-            try {
-                const response = await fetch(`${WORKER_URL}/api/reddit`);
-                const data = await response.json();
-                
-                container.innerHTML = '';
-                if (data.posts && data.posts.length > 0) {
-                    data.posts.slice(0, 6).forEach(post => {
-                        const div = document.createElement('div');
-                        div.className = 'reddit-item';
-                        div.innerHTML = `
-                            <div class="reddit-title">${post.title}</div>
-                            <div class="reddit-meta">r/${post.subreddit} • ${post.score} upvotes • ${post.num_comments} comments</div>
-                        `;
-                        div.style.cursor = 'pointer';
-                        div.onclick = () => window.open(`https://reddit.com${post.permalink}`, '_blank');
-                        container.appendChild(div);
-                    });
-                } else {
-                    container.innerHTML = '<div>No recent Reddit activity</div>';
-                }
-            } catch (error) {
-                container.innerHTML = `<div class="error">Error loading Reddit: ${error.message}</div>`;
-            }
-        }
-
-        // Update last updated time
-        function updateLastUpdated() {
-            const now = new Date();
-            document.getElementById('lastUpdated').textContent = 
-                `Last updated: ${now.toLocaleString()}`;
-        }
-
-        // Refresh all data
         async function refreshAll() {
-            updateLastUpdated();
+            document.getElementById('systemStatus').textContent = 'SCANNING...';
+            
             await Promise.all([
-                fetchAIScore(),
-                fetchStocks(),
-                fetchNews(),
-                fetchFlights(),
-                fetchDeployments(),
-                fetchReddit()
+                loadAnalysis(),
+                loadStocks(),
+                loadFlights(),
+                loadNews()
             ]);
+
+            document.getElementById('systemStatus').textContent = 'OPERATIONAL';
         }
 
-        // Initialize dashboard
-        async function init() {
-            await refreshAll();
-            setInterval(refreshAll, REFRESH_INTERVAL);
+        async function loadAnalysis() {
+            try {
+                const response = await fetch(`${API_BASE}/api/analysis`);
+                const data = await response.json();
+
+                // Update status bar
+                if (data.lastMiniRun) {
+                    const miniTime = new Date(data.lastMiniRun);
+                    document.getElementById('lastMini').textContent = miniTime.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+
+                if (data.lastDeepRun) {
+                    const deepTime = new Date(data.lastDeepRun);
+                    document.getElementById('lastDeep').textContent = deepTime.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+
+                // Display latest analysis (prefer deep over mini)
+                const latest = data.deep || data.mini;
+                if (latest) {
+                    displayLatestAnalysis(latest);
+                }
+
+                // Display mini analysis
+                if (data.mini) {
+                    displayMiniAnalysis(data.mini);
+                }
+
+                // Display deep analysis
+                if (data.deep) {
+                    displayDeepAnalysis(data.deep);
+                }
+
+            } catch (error) {
+                console.error('Error loading analysis:', error);
+                document.getElementById('latestAnalysis').innerHTML = `<div class="error">Failed to load analysis: ${error.message}</div>`;
+            }
         }
 
-        // Start the dashboard
-        init();
+        function displayLatestAnalysis(analysis) {
+            const threatLevel = analysis.threatLevel || 50;
+            document.getElementById('threatFill').style.width = `${threatLevel}%`;
+            document.getElementById('threatScore').textContent = `THREAT LEVEL: ${threatLevel}/100`;
+            document.getElementById('latestModel').textContent = analysis.model || 'GPT-4o';
+
+            let html = '';
+
+            if (analysis.summary) {
+                html += `<div class="executive-summary">${analysis.summary}</div>`;
+            }
+
+            if (analysis.executiveSummary) {
+                html += `<div class="executive-summary">${analysis.executiveSummary}</div>`;
+            }
+
+            if (analysis.probability) {
+                html += `<div style="text-align: center; margin: 20px 0; font-size: 1.5em;">
+                    <strong>30-Day Action Probability: ${analysis.probability}%</strong>
+                </div>`;
+            }
+
+            if (analysis.regions && Array.isArray(analysis.regions)) {
+                html += '<h3 style="margin-top: 20px;">Top Regions of Concern:</h3><ul class="region-list">';
+                analysis.regions.forEach(region => {
+                    if (typeof region === 'string') {
+                        html += `<li class="region-item">${region}</li>`;
+                    } else {
+                        html += `<li class="region-item">
+                            ${region.name || region}
+                            ${region.score ? `<span class="region-score">${region.score}</span>` : ''}
+                            ${region.reasoning ? `<div style="margin-top: 5px; font-size: 0.9em; opacity: 0.8;">${region.reasoning}</div>` : ''}
+                        </li>`;
+                    }
+                });
+                html += '</ul>';
+            }
+
+            document.getElementById('latestAnalysis').innerHTML = html;
+        }
+
+        function displayMiniAnalysis(analysis) {
+            let html = `<div class="timestamp">Updated: ${new Date(analysis.timestamp).toLocaleString()}</div>`;
+
+            html += `<div style="font-size: 1.2em; margin: 15px 0;">
+                <strong>Threat Level: ${analysis.threatLevel}/100</strong>
+            </div>`;
+
+            if (analysis.probability) {
+                html += `<div style="font-size: 1.1em; margin: 10px 0;">
+                    30-Day Probability: <strong>${analysis.probability}%</strong>
+                </div>`;
+            }
+
+            if (analysis.summary) {
+                html += `<div class="executive-summary">${analysis.summary}</div>`;
+            }
+
+            if (analysis.regions) {
+                html += '<h3 style="margin-top: 15px;">Key Regions:</h3><ul class="region-list">';
+                analysis.regions.forEach(region => {
+                    html += `<li class="region-item">${region}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            if (analysis.indicators) {
+                html += '<h3 style="margin-top: 15px;">Key Indicators:</h3><div class="indicator-list">';
+                if (Array.isArray(analysis.indicators)) {
+                    analysis.indicators.forEach(indicator => {
+                        html += `<div class="indicator">${indicator}</div>`;
+                    });
+                }
+                html += '</div>';
+            }
+
+            document.getElementById('miniAnalysis').innerHTML = html;
+        }
+
+        function displayDeepAnalysis(analysis) {
+            let html = `<div class="timestamp">Updated: ${new Date(analysis.timestamp).toLocaleString()}</div>`;
+
+            html += `<div style="font-size: 1.2em; margin: 15px 0;">
+                <strong>Threat Level: ${analysis.threatLevel}/100</strong>
+                ${analysis.confidenceInterval ? ` (CI: ${analysis.confidenceInterval})` : ''}
+            </div>`;
+
+            if (analysis.probabilities) {
+                html += '<div class="probability-grid">';
+                html += `<div class="probability-card">
+                    <div class="probability-label">7 Days</div>
+                    <div class="probability-value">${analysis.probabilities['7day'] || analysis.probabilities.sevenDay || '--'}%</div>
+                </div>`;
+                html += `<div class="probability-card">
+                    <div class="probability-label">30 Days</div>
+                    <div class="probability-value">${analysis.probabilities['30day'] || analysis.probabilities.thirtyDay || '--'}%</div>
+                </div>`;
+                html += `<div class="probability-card">
+                    <div class="probability-label">90 Days</div>
+                    <div class="probability-value">${analysis.probabilities['90day'] || analysis.probabilities.ninetyDay || '--'}%</div>
+                </div>`;
+                html += '</div>';
+            }
+
+            if (analysis.executiveSummary) {
+                html += `<div class="executive-summary">${analysis.executiveSummary}</div>`;
+            }
+
+            if (analysis.regions && Array.isArray(analysis.regions)) {
+                html += '<h3 style="margin-top: 20px;">Regional Breakdown:</h3><ul class="region-list">';
+                analysis.regions.forEach(region => {
+                    html += `<li class="region-item">
+                        ${region.name || region}
+                        ${region.score ? `<span class="region-score">${region.score}/100</span>` : ''}
+                        ${region.reasoning ? `<div style="margin-top: 5px; font-size: 0.9em; opacity: 0.8;">${region.reasoning}</div>` : ''}
+                    </li>`;
+                });
+                html += '</ul>';
+            }
+
+            if (analysis.scenarios) {
+                html += '<h3 style="margin-top: 20px;">Likely Scenarios:</h3>';
+                if (Array.isArray(analysis.scenarios)) {
+                    analysis.scenarios.forEach(scenario => {
+                        html += `<div class="scenario-box">${scenario}</div>`;
+                    });
+                }
+            }
+
+            document.getElementById('deepAnalysis').innerHTML = html;
+        }
+
+        async function loadStocks() {
+            const symbols = ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'HII', 'LHX'];
+            let html = '';
+
+            for (const symbol of symbols) {
+                try {
+                    const response = await fetch(`${API_BASE}/api/stock/${symbol}`);
+                    const stock = await response.json();
+
+                    const changeClass = stock.changePercent >= 0 ? 'positive' : 'negative';
+                    const changeSymbol = stock.changePercent >= 0 ? '▲' : '▼';
+
+                    html += `
+                        <div class="stock-card">
+                            <div class="stock-symbol">${stock.symbol}</div>
+                            <div class="stock-price">$${stock.price?.toFixed(2) || '--'}</div>
+                            <div class="stock-change ${changeClass}">
+                                ${changeSymbol} ${Math.abs(stock.changePercent || 0).toFixed(2)}%
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    html += `
+                        <div class="stock-card">
+                            <div class="stock-symbol">${symbol}</div>
+                            <div class="stock-price">ERROR</div>
+                        </div>
+                    `;
+                }
+            }
+
+            document.getElementById('stockGrid').innerHTML = html;
+        }
+
+        async function loadFlights() {
+            try {
+                const response = await fetch(`${API_BASE}/api/flights`);
+                const data = await response.json();
+
+                document.getElementById('flightCount').textContent = data.count || 0;
+
+                let html = '<div style="margin-top: 20px; max-height: 200px; overflow-y: auto;">';
+                if (data.flights && data.flights.length > 0) {
+                    data.flights.slice(0, 10).forEach(flight => {
+                        html += `<div style="background: #1a1f36; padding: 8px; margin: 5px 0; font-size: 0.9em;">
+                            <strong>${flight.callsign || 'Unknown'}</strong> - 
+                            Alt: ${Math.round(flight.altitude || 0)}m - 
+                            Vel: ${Math.round(flight.velocity || 0)}m/s
+                        </div>`;
+                    });
+                }
+                html += '</div>';
+
+                document.getElementById('flightDetails').innerHTML = html;
+            } catch (error) {
+                document.getElementById('flightCount').textContent = 'ERR';
+                console.error('Error loading flights:', error);
+            }
+        }
+
+        async function loadNews() {
+            try {
+                const response = await fetch(`${API_BASE}/api/news`);
+                const data = await response.json();
+
+                let html = '';
+                if (data.articles && data.articles.length > 0) {
+                    data.articles.slice(0, 15).forEach(article => {
+                        html += `
+                            <div class="news-item">
+                                <div class="news-title">${article.title}</div>
+                                <div class="news-source">${article.source?.name || 'Unknown'} - ${new Date(article.publishedAt).toLocaleDateString()}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = '<div class="loading">No news available</div>';
+                }
+
+                document.getElementById('newsList').innerHTML = html;
+            } catch (error) {
+                document.getElementById('newsList').innerHTML = `<div class="error">Failed to load news: ${error.message}</div>`;
+                console.error('Error loading news:', error);
+            }
+        }
+
+        async function runMiniAnalysis() {
+            document.getElementById('systemStatus').textContent = 'RUNNING QUICK SCAN...';
+            try {
+                const response = await fetch(`${API_BASE}/api/run-mini`);
+                const data = await response.json();
+                await loadAnalysis();
+                document.getElementById('systemStatus').textContent = 'OPERATIONAL';
+                alert('Quick scan complete!');
+            } catch (error) {
+                document.getElementById('systemStatus').textContent = 'ERROR';
+                alert('Quick scan failed: ' + error.message);
+            }
+        }
+
+        async function runDeepAnalysis() {
+            document.getElementById('systemStatus').textContent = 'RUNNING DEEP ANALYSIS...';
+            try {
+                const response = await fetch(`${API_BASE}/api/run-deep`);
+                const data = await response.json();
+                await loadAnalysis();
+                document.getElementById('systemStatus').textContent = 'OPERATIONAL';
+                alert('Deep analysis complete!');
+            } catch (error) {
+                document.getElementById('systemStatus').textContent = 'ERROR';
+                alert('Deep analysis failed: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>
