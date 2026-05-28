@@ -7,16 +7,11 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
             --bg: #0a0c10;
             --surface: #111318;
-            --surface2: #181c24;
             --border: rgba(255,255,255,0.07);
             --text: #e8eaf0;
             --muted: #6b7280;
@@ -35,7 +30,7 @@
             overflow-x: hidden;
         }
 
-        /* ── TOP NAV ── */
+        /* NAV */
         nav {
             display: flex;
             align-items: center;
@@ -59,15 +54,7 @@
 
         .nav-logo span { color: var(--accent); }
 
-        .nav-meta {
-            display: flex;
-            gap: 32px;
-            align-items: center;
-        }
-
-        .nav-stat {
-            text-align: center;
-        }
+        .nav-meta { display: flex; gap: 32px; align-items: center; }
 
         .nav-stat-label {
             font-size: 0.65em;
@@ -76,11 +63,7 @@
             color: var(--muted);
         }
 
-        .nav-stat-value {
-            font-size: 0.85em;
-            font-weight: 600;
-            color: var(--text);
-        }
+        .nav-stat-value { font-size: 0.85em; font-weight: 600; }
 
         .live-dot {
             display: inline-flex;
@@ -95,23 +78,19 @@
 
         .live-dot::before {
             content: '';
-            width: 7px;
-            height: 7px;
+            width: 7px; height: 7px;
             border-radius: 50%;
             background: var(--green);
             animation: blink 1.4s infinite;
         }
 
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.2; }
-        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-        /* ── HERO ── */
+        /* HERO */
         .hero {
-            position: relative;
             text-align: center;
-            padding: 72px 20px 60px;
+            padding: 72px 20px 48px;
+            position: relative;
             overflow: hidden;
         }
 
@@ -132,13 +111,6 @@
             margin-bottom: 20px;
         }
 
-        .hero-percent-wrap {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
         .hero-percent {
             font-family: 'Oswald', sans-serif;
             font-size: clamp(120px, 22vw, 240px);
@@ -146,14 +118,13 @@
             line-height: 0.88;
             letter-spacing: -4px;
             transition: color 0.8s ease;
-            /* glow */
             text-shadow: 0 0 80px currentColor;
         }
 
-        .hero-percent.level-low    { color: #22c55e; }
-        .hero-percent.level-medium { color: #eab308; }
-        .hero-percent.level-high   { color: #f97316; }
-        .hero-percent.level-critical{ color: #ef4444; }
+        .hero-percent.level-low      { color: #22c55e; }
+        .hero-percent.level-medium   { color: #eab308; }
+        .hero-percent.level-high     { color: #f97316; }
+        .hero-percent.level-critical { color: #ef4444; }
 
         .hero-percent-sign {
             font-family: 'Oswald', sans-serif;
@@ -186,12 +157,30 @@
             transition: color 0.8s, border-color 0.8s;
         }
 
-        .threat-badge.level-low     { color: #22c55e; }
-        .threat-badge.level-medium  { color: #eab308; }
-        .threat-badge.level-high    { color: #f97316; }
-        .threat-badge.level-critical{ color: #ef4444; }
+        .threat-badge.level-low      { color: #22c55e; }
+        .threat-badge.level-medium   { color: #eab308; }
+        .threat-badge.level-high     { color: #f97316; }
+        .threat-badge.level-critical { color: #ef4444; }
 
-        /* probability strip */
+        /* STOCK BOOST BANNER */
+        .boost-banner {
+            display: none;
+            margin: 12px auto 0;
+            max-width: 420px;
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.35);
+            border-radius: 99px;
+            padding: 7px 20px;
+            font-size: 0.78em;
+            font-weight: 600;
+            color: #ef4444;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .boost-banner.visible { display: block; }
+
+        /* PROB PILLS */
         .prob-strip {
             display: flex;
             justify-content: center;
@@ -224,7 +213,7 @@
             color: #fff;
         }
 
-        /* ── METER BAR ── */
+        /* METER */
         .meter-section {
             max-width: 760px;
             margin: 0 auto 56px;
@@ -236,13 +225,12 @@
             background: rgba(255,255,255,0.08);
             border-radius: 99px;
             overflow: hidden;
-            position: relative;
         }
 
         .meter-fill {
             height: 100%;
             border-radius: 99px;
-            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
             background: linear-gradient(90deg, #22c55e 0%, #eab308 40%, #f97316 70%, #ef4444 100%);
         }
 
@@ -252,36 +240,14 @@
             margin-top: 8px;
         }
 
-        .meter-tick {
-            font-size: 0.65em;
-            color: var(--muted);
-        }
+        .meter-tick { font-size: 0.65em; color: var(--muted); }
 
-        /* ── SUMMARY ── */
+        /* SUMMARY */
         .summary-section {
             max-width: 760px;
             margin: 0 auto 56px;
             padding: 0 20px;
-        }
-
-        .summary-box {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 24px 28px;
-            font-size: 0.95em;
-            line-height: 1.75;
-            color: rgba(232,234,240,0.85);
-        }
-
-        .summary-box p { margin-bottom: 10px; }
-        .summary-box p:last-child { margin-bottom: 0; }
-
-        /* ── SECTION HEADINGS ── */
-        .section {
-            max-width: 1200px;
-            margin: 0 auto 48px;
-            padding: 0 24px;
+            display: none;
         }
 
         .section-title {
@@ -304,123 +270,41 @@
             background: var(--border);
         }
 
-        /* ── REGIONS ── */
-        .region-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-
-        .region-item {
+        .summary-box {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 16px 20px;
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-        }
-
-        .region-score-circle {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--surface2);
-            border: 2px solid var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Oswald', sans-serif;
+            border-radius: 14px;
+            padding: 24px 28px;
             font-size: 0.95em;
-            font-weight: 600;
-            flex-shrink: 0;
-            color: var(--accent);
+            line-height: 1.75;
+            color: rgba(232,234,240,0.85);
         }
 
-        .region-info { flex: 1; }
-
-        .region-name {
-            font-weight: 700;
-            font-size: 0.95em;
-            margin-bottom: 4px;
+        /* STOCKS */
+        .section {
+            max-width: 900px;
+            margin: 0 auto 48px;
+            padding: 0 24px;
         }
 
-        .region-reasoning {
-            font-size: 0.84em;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        /* ── CARRIERS ── */
-        .carrier-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 12px;
-        }
-
-        .carrier-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 16px 18px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .carrier-icon {
-            font-size: 1.6em;
-        }
-
-        .carrier-info { flex: 1; }
-
-        .carrier-name {
-            font-weight: 600;
-            font-size: 0.88em;
-            margin-bottom: 4px;
-        }
-
-        .carrier-location {
-            font-size: 0.78em;
-            color: var(--muted);
-        }
-
-        .carrier-badge {
-            padding: 3px 9px;
-            border-radius: 99px;
-            font-size: 0.68em;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .carrier-badge.deployed {
-            background: rgba(239,68,68,0.15);
-            color: var(--red);
-            border: 1px solid rgba(239,68,68,0.3);
-        }
-
-        .carrier-badge.port {
-            background: rgba(34,197,94,0.12);
-            color: var(--green);
-            border: 1px solid rgba(34,197,94,0.3);
-        }
-
-        /* ── STOCKS ── */
         .stock-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
         }
 
         .stock-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 10px;
-            padding: 16px;
+            padding: 14px;
             text-align: center;
         }
 
         .stock-symbol {
             font-family: 'Oswald', sans-serif;
             font-weight: 600;
-            font-size: 1em;
+            font-size: 0.95em;
             letter-spacing: 1px;
             color: var(--muted);
             margin-bottom: 6px;
@@ -428,94 +312,17 @@
 
         .stock-price {
             font-family: 'Oswald', sans-serif;
-            font-size: 1.4em;
+            font-size: 1.3em;
             font-weight: 600;
             color: #fff;
             margin-bottom: 4px;
         }
 
-        .stock-change {
-            font-size: 0.82em;
-            font-weight: 700;
-        }
-
+        .stock-change { font-size: 0.82em; font-weight: 700; }
         .positive { color: var(--green); }
         .negative { color: var(--red); }
 
-        /* ── TWO-COL GRID ── */
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        @media (max-width: 700px) {
-            .two-col { grid-template-columns: 1fr; }
-        }
-
-        /* ── FLIGHTS BIG STAT ── */
-        .big-stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 40px 20px;
-            text-align: center;
-        }
-
-        .big-number {
-            font-family: 'Oswald', sans-serif;
-            font-size: 5em;
-            font-weight: 700;
-            color: var(--accent);
-            line-height: 1;
-            margin-bottom: 8px;
-        }
-
-        .big-label {
-            font-size: 0.8em;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        /* ── INDICATORS ── */
-        .indicator-list { display: flex; flex-direction: column; gap: 8px; }
-
-        .indicator {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--accent);
-            border-radius: 0 8px 8px 0;
-            padding: 12px 16px;
-            font-size: 0.87em;
-            color: rgba(232,234,240,0.8);
-            line-height: 1.5;
-        }
-
-        /* ── NEWS ── */
-        .news-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
-
-        .news-item {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 14px 16px;
-        }
-
-        .news-title {
-            font-weight: 600;
-            font-size: 0.88em;
-            margin-bottom: 5px;
-            color: var(--text);
-            line-height: 1.4;
-        }
-
-        .news-source {
-            font-size: 0.76em;
-            color: var(--muted);
-        }
-
-        /* ── FOOTER ── */
+        /* FOOTER */
         footer {
             border-top: 1px solid var(--border);
             padding: 24px 32px;
@@ -525,22 +332,7 @@
             margin-top: 40px;
         }
 
-        /* ── UTILS ── */
-        .loading {
-            color: var(--muted);
-            font-size: 0.85em;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .error-msg {
-            color: var(--red);
-            font-size: 0.85em;
-            padding: 12px;
-            border: 1px solid rgba(239,68,68,0.25);
-            border-radius: 8px;
-            background: rgba(239,68,68,0.07);
-        }
+        .loading { color: var(--muted); font-size: 0.85em; padding: 20px; text-align: center; }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -549,23 +341,17 @@
         @media (max-width: 600px) {
             nav { padding: 12px 16px; }
             .nav-meta { gap: 16px; }
-            .hero { padding: 48px 16px 40px; }
-            .section { padding: 0 16px; }
+            .hero { padding: 48px 16px 32px; }
         }
     </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
     <div class="nav-logo">TRUMP<span>STRIKES</span>.COM</div>
     <div class="nav-meta">
         <div class="nav-stat">
-            <div class="nav-stat-label">Last Scan</div>
-            <div class="nav-stat-value" id="lastMini">—</div>
-        </div>
-        <div class="nav-stat">
-            <div class="nav-stat-label">Deep Analysis</div>
+            <div class="nav-stat-label">Last Update</div>
             <div class="nav-stat-value" id="lastDeep">—</div>
         </div>
         <div class="nav-stat">
@@ -579,15 +365,13 @@
 <!-- HERO -->
 <section class="hero">
     <div class="hero-eyebrow">AI-Powered Intelligence Analysis</div>
-    <div class="hero-percent-wrap">
-        <div>
-            <span class="hero-percent level-medium" id="heroPercent">—</span><span class="hero-percent-sign">%</span>
-        </div>
-        <div class="hero-label">Likelihood of US Military Action</div>
-        <div class="threat-badge level-medium" id="threatBadge">Calculating...</div>
+    <div>
+        <span class="hero-percent level-medium" id="heroPercent">—</span><span class="hero-percent-sign">%</span>
     </div>
+    <div class="hero-label">Likelihood of US Military Action</div>
+    <div class="threat-badge level-medium" id="threatBadge">Calculating...</div>
+    <div class="boost-banner" id="boostBanner">⚠ Defense stocks surging near market close — threat elevated</div>
 
-    <!-- 7/30/90 day pills -->
     <div class="prob-strip">
         <div class="prob-pill">
             <div class="prob-pill-label">7 Days</div>
@@ -601,21 +385,13 @@
             <div class="prob-pill-label">90 Days</div>
             <div class="prob-pill-value" id="prob90">—</div>
         </div>
-        <div class="prob-pill">
-            <div class="prob-pill-label">Carriers Deployed</div>
-            <div class="prob-pill-value"><span id="deployedCount">—</span><span style="font-size:0.55em;color:var(--muted)">/11</span></div>
-        </div>
-        <div class="prob-pill">
-            <div class="prob-pill-label">Military Flights</div>
-            <div class="prob-pill-value" id="flightCountHero">—</div>
-        </div>
     </div>
 </section>
 
 <!-- METER -->
 <div class="meter-section">
     <div class="meter-track">
-        <div class="meter-fill" id="meterFill" style="width: 0%"></div>
+        <div class="meter-fill" id="meterFill" style="width:0%"></div>
     </div>
     <div class="meter-ticks">
         <span class="meter-tick">Low Risk</span>
@@ -625,67 +401,9 @@
     </div>
 </div>
 
-<!-- SUMMARY -->
-<div class="summary-section" id="summarySection" style="display:none">
-    <div class="section-title">Executive Summary</div>
-    <div class="summary-box" id="summaryBox"></div>
-</div>
-
-<!-- REGIONS + INDICATORS -->
-<div class="section">
-    <div class="two-col">
-        <div>
-            <div class="section-title">Top Regions to Watch</div>
-            <ul class="region-list" id="regionList">
-                <li class="loading">Analyzing regions...</li>
-            </ul>
-        </div>
-        <div>
-            <div class="section-title">Key Indicators</div>
-            <div class="indicator-list" id="indicators">
-                <div class="loading">Loading indicators...</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- DEFENSE STOCKS -->
-<div class="section">
-    <div class="section-title">Defense Contractor Stocks</div>
-    <div class="stock-grid" id="stockGrid">
-        <div class="loading">Fetching market data...</div>
-    </div>
-</div>
-
-<!-- CARRIERS -->
-<div class="section">
-    <div class="section-title">US Aircraft Carrier Fleet</div>
-    <div class="carrier-grid" id="carrierGrid">
-        <div class="loading">Loading carrier positions...</div>
-    </div>
-</div>
-
-<!-- FLIGHTS + NEWS -->
-<div class="section">
-    <div class="two-col">
-        <div>
-            <div class="section-title">Military Flight Activity</div>
-            <div class="big-stat-card">
-                <div class="big-number" id="flightCount">—</div>
-                <div class="big-label">Active Military Aircraft</div>
-            </div>
-        </div>
-        <div>
-            <div class="section-title">Latest Intelligence</div>
-            <div class="news-list" id="newsList">
-                <div class="loading">Loading news...</div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <footer>
-    TrumpStrikes.com &nbsp;·&nbsp; AI analysis updated every 2 minutes &nbsp;·&nbsp; Not financial or military advice
+    TrumpStrikes.com &nbsp;·&nbsp; AI analysis updated every 4 hours &nbsp;·&nbsp; Not financial or military advice
 </footer>
 
 <script>
@@ -704,18 +422,17 @@
     }
 
     function threatLevel(score) {
-        if (score < 30)  return { label: 'LOW RISK',   cls: 'level-low' };
-        if (score < 55)  return { label: 'MODERATE',   cls: 'level-medium' };
-        if (score < 75)  return { label: 'ELEVATED',   cls: 'level-high' };
-        return                  { label: 'CRITICAL',   cls: 'level-critical' };
+        if (score < 30)  return { label: 'LOW RISK',  cls: 'level-low' };
+        if (score < 55)  return { label: 'MODERATE',  cls: 'level-medium' };
+        if (score < 75)  return { label: 'ELEVATED',  cls: 'level-high' };
+        return                  { label: 'CRITICAL',  cls: 'level-critical' };
     }
 
     function setScore(score) {
-        const heroEl    = document.getElementById('heroPercent');
-        const badgeEl   = document.getElementById('threatBadge');
-        const meterEl   = document.getElementById('meterFill');
+        const heroEl  = document.getElementById('heroPercent');
+        const badgeEl = document.getElementById('threatBadge');
+        const meterEl = document.getElementById('meterFill');
 
-        // animate count-up
         const current = parseInt(heroEl.textContent) || 0;
         const step = (score - current) / 30;
         let frame = 0;
@@ -734,13 +451,7 @@
 
     async function refreshAll() {
         document.getElementById('liveStatus').textContent = 'Updating';
-        await Promise.all([
-            loadAnalysis(),
-            loadCarriers(),
-            loadStocks(),
-            loadFlights(),
-            loadNews()
-        ]);
+        await loadAnalysis();
         document.getElementById('liveStatus').textContent = 'Live';
     }
 
@@ -750,161 +461,43 @@
             const data = await res.json();
 
             if (!data.mini && !data.deep) {
-                await Promise.all([
-                    fetch(`${API_BASE}/api/trigger-mini`).catch(() => {}),
-                    fetch(`${API_BASE}/api/trigger-deep`).catch(() => {})
-                ]);
-                await new Promise(r => setTimeout(r, 2000));
-                const r2 = await fetch(`${API_BASE}/api/analysis`);
-                const d2 = await r2.json();
-                displayAnalysis(d2.deep || d2.mini);
-                updateTimestamps(d2);
+                await fetch(`${API_BASE}/api/trigger-deep`).catch(() => {});
                 return;
             }
 
-            updateTimestamps(data);
-            displayAnalysis(data.deep || data.mini);
+            if (data.lastDeepRun) {
+                const t = new Date(data.lastDeepRun);
+                document.getElementById('lastDeep').textContent = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            const a = data.deep || data.mini;
+            if (!a) return;
+
+            const score = a.threatLevel || a.actionLikelihood || 0;
+            setScore(score);
+
+            // Show boost banner if flagged by worker
+            if (a.stockBoosted) {
+                document.getElementById('boostBanner').classList.add('visible');
+            }
+
+            const summary = a.executiveSummary || a.summary || '';
+            if (summary) {
+                document.getElementById('summaryBox').innerHTML = summary;
+                document.getElementById('summarySection').style.display = 'block';
+            }
+
+            if (a.probabilities) {
+                const p = a.probabilities;
+                document.getElementById('prob7').textContent  = (p['7day']  ?? p.sevenDay  ?? '—') + (p['7day']  != null ? '%' : '');
+                document.getElementById('prob30').textContent = (p['30day'] ?? p.thirtyDay ?? a.probability ?? '—') + (p['30day'] != null ? '%' : '');
+                document.getElementById('prob90').textContent = (p['90day'] ?? p.ninetyDay ?? '—') + (p['90day'] != null ? '%' : '');
+            }
         } catch (e) {
             console.error('Analysis error:', e);
         }
     }
 
-    function updateTimestamps(data) {
-        if (data.lastMiniRun) {
-            const t = new Date(data.lastMiniRun);
-            document.getElementById('lastMini').textContent = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        }
-        if (data.lastDeepRun) {
-            const t = new Date(data.lastDeepRun);
-            document.getElementById('lastDeep').textContent = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        }
-    }
-
-    function displayAnalysis(a) {
-        if (!a) return;
-        const score = a.threatLevel || a.actionLikelihood || 0;
-        setScore(score);
-
-        // Summary
-        const summary = a.executiveSummary || a.summary || '';
-        if (summary) {
-            document.getElementById('summaryBox').innerHTML = summary;
-            document.getElementById('summarySection').style.display = 'block';
-        }
-
-        // Probabilities
-        if (a.probabilities) {
-            const p = a.probabilities;
-            const fmt = v => v !== undefined ? v + '%' : '—';
-            document.getElementById('prob7').textContent  = fmt(p['7day']  || p.sevenDay);
-            document.getElementById('prob30').textContent = fmt(p['30day'] || p.thirtyDay || a.probability);
-            document.getElementById('prob90').textContent = fmt(p['90day'] || p.ninetyDay);
-        } else if (a.probability) {
-            document.getElementById('prob30').textContent = a.probability + '%';
-        }
-
-        // Regions
-        if (a.regions && a.regions.length) {
-            document.getElementById('regionList').innerHTML = a.regions.map(r => {
-                if (typeof r === 'string') return `<li class="region-item"><div class="region-score-circle">—</div><div class="region-info"><div class="region-name">${r}</div></div></li>`;
-                return `<li class="region-item">
-                    <div class="region-score-circle">${r.score || '—'}</div>
-                    <div class="region-info">
-                        <div class="region-name">${r.name || r}</div>
-                        ${r.reasoning ? `<div class="region-reasoning">${r.reasoning}</div>` : ''}
-                    </div>
-                </li>`;
-            }).join('');
-        }
-
-        // Indicators
-        if (Array.isArray(a.indicators) && a.indicators.length) {
-            document.getElementById('indicators').innerHTML = a.indicators.map(ind =>
-                `<div class="indicator">${ind}</div>`
-            ).join('');
-        }
-    }
-
-    async function loadCarriers() {
-        try {
-            const res  = await fetch(`${API_BASE}/api/carriers`);
-            const data = await res.json();
-
-            document.getElementById('deployedCount').textContent = data.deployed ?? '—';
-
-            if (data.carriers && data.carriers.length) {
-                document.getElementById('carrierGrid').innerHTML = data.carriers.map(c => {
-                    const deployed = c.deployed || c.status?.toLowerCase().includes('deployed');
-                    return `<div class="carrier-card">
-                        <div class="carrier-icon">🚢</div>
-                        <div class="carrier-info">
-                            <div class="carrier-name">${c.name}</div>
-                            <div class="carrier-location">${c.location || 'Unknown'}</div>
-                        </div>
-                        <div class="carrier-badge ${deployed ? 'deployed' : 'port'}">${deployed ? 'Deployed' : 'In Port'}</div>
-                    </div>`;
-                }).join('');
-            } else {
-                document.getElementById('carrierGrid').innerHTML = '<div class="loading">Carrier data unavailable</div>';
-            }
-        } catch (e) {
-            document.getElementById('carrierGrid').innerHTML = '<div class="error-msg">Failed to load carrier data</div>';
-        }
-    }
-
-    async function loadStocks() {
-        const symbols = ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'HII', 'LHX'];
-        const results = await Promise.all(symbols.map(s =>
-            fetch(`${API_BASE}/api/stock/${s}`)
-                .then(r => r.json())
-                .catch(() => ({ symbol: s, price: null, changePercent: null }))
-        ));
-
-        document.getElementById('stockGrid').innerHTML = results.map(stock => {
-            const up    = stock.changePercent >= 0;
-            const pct   = stock.changePercent != null ? Math.abs(stock.changePercent).toFixed(2) : '—';
-            const price = stock.price != null ? '$' + stock.price.toFixed(2) : '—';
-            return `<div class="stock-card">
-                <div class="stock-symbol">${stock.symbol}</div>
-                <div class="stock-price">${price}</div>
-                <div class="stock-change ${stock.changePercent != null ? (up ? 'positive' : 'negative') : ''}">
-                    ${stock.changePercent != null ? (up ? '▲' : '▼') : ''} ${pct}${stock.changePercent != null ? '%' : ''}
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    async function loadFlights() {
-        try {
-            const res  = await fetch(`${API_BASE}/api/flights`);
-            const data = await res.json();
-            const n = data.count ?? '—';
-            document.getElementById('flightCount').textContent     = n;
-            document.getElementById('flightCountHero').textContent = n;
-        } catch (e) {
-            document.getElementById('flightCount').textContent     = '—';
-            document.getElementById('flightCountHero').textContent = '—';
-        }
-    }
-
-    async function loadNews() {
-        try {
-            const res  = await fetch(`${API_BASE}/api/news`);
-            const data = await res.json();
-            if (data.articles && data.articles.length) {
-                document.getElementById('newsList').innerHTML = data.articles.slice(0, 10).map(a =>
-                    `<div class="news-item">
-                        <div class="news-title">${a.title}</div>
-                        <div class="news-source">${a.source?.name || 'Unknown'} &middot; ${new Date(a.publishedAt).toLocaleDateString()}</div>
-                    </div>`
-                ).join('');
-            } else {
-                document.getElementById('newsList').innerHTML = '<div class="loading">No news available</div>';
-            }
-        } catch (e) {
-            document.getElementById('newsList').innerHTML = '<div class="error-msg">Failed to load news</div>';
-        }
-    }
 </script>
 </body>
 </html>
